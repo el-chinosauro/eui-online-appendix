@@ -1,0 +1,865 @@
+---
+title: "Occupational Dynamics"
+date: "22/06/2021"
+output: 
+  html_document
+summary: "Scatterplots showing occupational dynamics across the last two available waves in the IPUMS dataset."
+showDate: false
+gallery:
+    - http://i.imgur.com/3wezPG1.png 
+    
+autoThumbnailImage: yes
+thumbnailImagePosition: left
+
+---
+
+***
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+### Disaggregated Occupational Dynamics 
+
+Here we provide a series of faceted scatterplots which describe the dynamics of surveyed individuals' occupational allocation in the last two available waves of the IPUMS dataset. We first examine the whole dataset and then refine the exercise by looking at individual countries. Here, each occupational category is reported in a different facet.
+
+\vspace{0.5cm}
+
+<details><summary>ENTIRE DATASET</summary>
+
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  )
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Benin </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Benin")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Botswana </summary><p>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Botswana")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Egypt </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Egypt")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Ghana </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Ghana")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Malawi </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Malawi")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Mali </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Mali")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Mauritius </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Mauritius")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Morocco </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Morocco")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Mozambique </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Mozambique")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Rwanda </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Rwanda")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> South Africa </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "South Africa")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Tanzania </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Tanzania")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>
+
+<details>
+<summary> Zambia </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("occupation_?", colnames(total))]) 
+var_list = var_list[c(1:5,7:11)]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+   group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("occupation_"),
+               names_to = "occupation",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+    occupation == "occupation_legislators" ~ "Legislators",
+    occupation == "occupation_professionals" ~ "Professionals",
+    occupation == "occupation_technicians" ~ "Technicians",
+    occupation == "occupation_clerks" ~ "Clerks",
+    occupation == "occupation_services" ~ "Services",
+
+    occupation == "occupation_crafts" ~ "Crafts",
+    occupation == "occupation_plant" ~ "Plant",
+    occupation == "occupation_elementary" ~ "Elementary",
+    occupation == "occupation_army" ~ "Army",
+    occupation == "occupation_other" ~ "Other" 
+    )
+  ) %>%
+  filter(country == "Zambia")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = occupation)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+</details>

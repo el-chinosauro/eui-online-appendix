@@ -1,0 +1,58 @@
+baseURL: https://example.org/
+languageCode: en-us
+defaultContentLanguage: en-us
+title: Services and Economic Development in Africa
+theme: hugo-tranquilpeak-theme
+paginate: 7
+canonifyurls: yes
+permalinks:
+  post: /:year/:month/:slug/
+taxonomies:
+  archive: archives
+  category: categories
+  tag: tags
+author:
+  bio: __This website hosts the online appendix for the recently published 'Services and Economic Development in Africa' report by Leonardo Baccini, Matteo Fiorini, Bernard Hoekman and Marco Sanfilippo. We have deployed this online tool in order to showcase graphs and maps on sectoral and occupational dynamics in Africa over available census waves in the IPUMS International database. The code used in the appendix and this website are developed and maintained by Lorenzo Sileci, a Research Associate at the EUI Robert Schuman Centre for Advanced Economics (Global Governance Programme), and PhD Student in Environmental Economics at the London School of Economics and Political Science (LSE).__
+  name: Services and Economic Development in Africa
+  picture: https://www.eui.eu/web-production/code/assets/img/logo-eui.svg
+menu:
+  links:
+    - identifier: github
+      name: GitHub
+      pre: <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      url: https://github.com/el-chinosauro
+      weight: 1
+  main:
+    - identifier: twitter
+      name: Twitter
+      pre: <i class="sidebar-button-icon fa fa-lg fa-twitter"></i>
+      url: https://twitter.com/el_chinosauro
+      weight: 1
+  
+
+params:
+  autoThumbnailImage: yes
+  clearReading: yes
+  coverImage: https://eoimages.gsfc.nasa.gov/images/imagerecords/90000/90008/asia_vir_2016_lrg.png
+  description: Hugo tranquilpeak theme demo
+  header:
+    rightLink:
+      class: ''
+      icon: ''
+      url: /#about
+  hierarchicalCategories: yes
+  imageGallery: yes
+  sharingOptions:
+    - icon: fa-facebook-official
+      name: Facebook
+      url: https://www.facebook.com/sharer/sharer.php?u=%s
+    - icon: fa-twitter
+      name: Twitter
+      url: https://twitter.com/intent/tweet?text=%s
+    - icon: fa-google-plus
+      name: Google+
+      url: https://plus.google.com/share?url=%s
+  sidebarBehavior: 1
+  syntaxHighlighter: highlight.js
+  thumbnailImage: yes
+  thumbnailImagePosition: bottom

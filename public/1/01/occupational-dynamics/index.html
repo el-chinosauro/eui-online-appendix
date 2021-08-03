@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.86.1 with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="Services and Economic Development in Africa">
+<meta name="keywords" content="">
+<meta name="description" content="Scatterplots showing occupational dynamics across the last two available waves in the IPUMS dataset.">
+
+
+<meta property="og:description" content="Scatterplots showing occupational dynamics across the last two available waves in the IPUMS dataset.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Occupational Dynamics">
+<meta name="twitter:title" content="Occupational Dynamics">
+<meta property="og:url" content="https://example.org/1/01/occupational-dynamics/">
+<meta property="twitter:url" content="https://example.org/1/01/occupational-dynamics/">
+<meta property="og:site_name" content="Services and Economic Development in Africa">
+<meta property="og:description" content="Scatterplots showing occupational dynamics across the last two available waves in the IPUMS dataset.">
+<meta name="twitter:description" content="Scatterplots showing occupational dynamics across the last two available waves in the IPUMS dataset.">
+<meta property="og:locale" content="en-us">
+
+  
+  
+  
+  
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+
+
+  
+    <meta property="og:image" content="http://i.imgur.com/3wezPG1.png">
+    <meta property="twitter:image" content="http://i.imgur.com/3wezPG1.png">
+  
+
+
+
+  <meta property="og:image" content="https://www.eui.eu/web-production/code/assets/img/logo-eui.svg">
+  <meta property="twitter:image" content="https://www.eui.eu/web-production/code/assets/img/logo-eui.svg">
+
+
+    <title>Occupational Dynamics</title>
+
+    <link rel="icon" href="https://example.org/favicon.png">
+    
+
+    
+
+    <link rel="canonical" href="https://example.org/1/01/occupational-dynamics/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://example.org/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+
+    
+      
+    
+    
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://example.org/">Services and Economic Development in Africa</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://example.org/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://www.eui.eu/web-production/code/assets/img/logo-eui.svg" alt="Author&#39;s picture" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://example.org/#about">
+          <img class="sidebar-profile-picture" src="https://www.eui.eu/web-production/code/assets/img/logo-eui.svg" alt="Author&#39;s picture" />
+        </a>
+        <h4 class="sidebar-profile-name">Services and Economic Development in Africa</h4>
+        
+          <h5 class="sidebar-profile-bio"><strong>This website hosts the online appendix for the recently published &lsquo;Services and Economic Development in Africa&rsquo; report by Leonardo Baccini, Matteo Fiorini, Bernard Hoekman and Marco Sanfilippo. We have deployed this online tool in order to showcase graphs and maps on sectoral and occupational dynamics in Africa over available census waves in the IPUMS International database. The code used in the appendix and this website are developed and maintained by Lorenzo Sileci, a Research Associate at the EUI Robert Schuman Centre for Advanced Economics (Global Governance Programme), and PhD Student in Environmental Economics at the London School of Economics and Political Science (LSE).</strong></h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://twitter.com/el_chinosauro" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-twitter"></i>
+      
+      <span class="sidebar-button-desc">Twitter</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/el-chinosauro" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+
+    </ul>
+  </div>
+</nav>
+
+      
+
+      <div id="main" data-behavior="4"
+        class="
+               hasCoverMetaIn
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-left">
+  
+    <h1 class="post-title" itemprop="headline">
+      Occupational Dynamics
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+    
+  </div>
+
+</div>
+          
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              
+
+
+<hr />
+<div id="disaggregated-occupational-dynamics" class="section level3">
+<h3>Disaggregated Occupational Dynamics</h3>
+<p>Here we provide a series of faceted scatterplots which describe the dynamics of surveyed individuals' occupational allocation in the last two available waves of the IPUMS dataset. We first examine the whole dataset and then refine the exercise by looking at individual countries. Here, each occupational category is reported in a different facet.</p>
+
+<p><details><summary>ENTIRE DATASET</summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-1-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Benin </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-2-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<details> <summary> Botswana </summary>
+<p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-3-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Egypt </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-4-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Ghana </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-5-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Malawi </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-6-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Mali </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-7-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Mauritius </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-8-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Morocco </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-9-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Mozambique </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-10-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Rwanda </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-11-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> South Africa </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-12-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Tanzania </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-13-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+<p><details> <summary> Zambia </summary></p>
+<p><img src="https://example.org/post/DSO-alternate-wb_files/figure-html/unnamed-chunk-14-1.png" width="1440" style="display: block; margin: auto;" /> </details></p>
+</div>
+
+              
+  
+  
+  
+    <div class="image-gallery">
+      <div class="image-gallery-metabar">
+        <span>Gallery 1 images</span>
+      </div>
+      <div class="image-gallery-photos ">
+        
+          
+          
+          <div class="photo-box">
+            <a class="photo-box-inner fancybox" data-fancybox-group="gallery-ff0f06f68335914f2073083fad86199b"
+               title="" href="http://i.imgur.com/3wezPG1.png">
+              <img class="photo" src="http://i.imgur.com/3wezPG1.png" itemprop="image">
+            </a>
+          </div>
+        
+      </div>
+    </div>
+    
+
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--disabled">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--disabled">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://example.org/1/01/occupational-dynamics/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://example.org/1/01/occupational-dynamics/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://example.org/1/01/occupational-dynamics/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+            
+          </div>
+        </article>
+        <footer id="footer" class="main-content-wrap">
+  <span class="copyrights">
+    &copy; 2021 Services and Economic Development in Africa. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--disabled">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--disabled">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://example.org/1/01/occupational-dynamics/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://example.org/1/01/occupational-dynamics/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://example.org/1/01/occupational-dynamics/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fexample.org%2F1%2F01%2Foccupational-dynamics%2F">
+          <i class="fa fa-facebook-official"></i><span>Share on Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fexample.org%2F1%2F01%2Foccupational-dynamics%2F">
+          <i class="fa fa-twitter"></i><span>Share on Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fexample.org%2F1%2F01%2Foccupational-dynamics%2F">
+          <i class="fa fa-google-plus"></i><span>Share on Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://www.eui.eu/web-production/code/assets/img/logo-eui.svg" alt="Author&#39;s picture" />
+    
+    <h4 id="about-card-name">Services and Economic Development in Africa</h4>
+    
+      <div id="about-card-bio"><strong>This website hosts the online appendix for the recently published &lsquo;Services and Economic Development in Africa&rsquo; report by Leonardo Baccini, Matteo Fiorini, Bernard Hoekman and Marco Sanfilippo. We have deployed this online tool in order to showcase graphs and maps on sectoral and occupational dynamics in Africa over available census waves in the IPUMS International database. The code used in the appendix and this website are developed and maintained by Lorenzo Sileci, a Research Associate at the EUI Robert Schuman Centre for Advanced Economics (Global Governance Programme), and PhD Student in Environmental Economics at the London School of Economics and Political Science (LSE).</strong></div>
+    
+    
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    <div id="cover" style="background-image:url('https://eoimages.gsfc.nasa.gov/images/imagerecords/90000/90008/asia_vir_2016_lrg.png');"></div>
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://example.org/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
