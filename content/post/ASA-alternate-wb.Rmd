@@ -1,0 +1,761 @@
+---
+title: "Aggregate Sectoral Dynamics"
+author:
+  - Lorenzo Sileci^[All code and this website are developed and maintained by Lorenzo Sileci (LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; l.sileci@lse.ac.uk)]
+
+output: 
+  html_document
+summary: "Scatterplots showing aggregate sectoral dynamics across the last two available waves in the IPUMS dataset."
+showDate: false
+gallery:
+    - http://i.imgur.com/1d3V3k2.png
+    
+autoThumbnailImage: yes
+thumbnailImagePosition: left
+---
+
+***
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+### Aggregate Sectoral Dynamics 
+
+Here we provide a series of scatterplots which describe the dynamics of surveyed individuals' sectoral allocation in the last two available waves of the IPUMS dataset. We first examine the whole dataset and then refine the exercise by looking at individual countries
+
+\vspace{0.5cm}
+
+<details><summary>ENTIRE DATASET<summary>
+
+As we can see in the scatterplot below, the general sectoral dynamics for the African countries included in the dataset underpin a movement from the primary to the tertiary sector over the years. 
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share)
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Benin </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Benin")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary> Botswana </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Botswana")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Egypt </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Egypt")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Ghana </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Ghana")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary>  Malawi </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Malawi")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary>  Mali </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Mali")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary>  Mauritius </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Mauritius")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary>  Morocco </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Morocco")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary>  Mozambique </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Mozambique")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary> Rwanda </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Rwanda")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+
+</details>
+
+<details>
+<summary>  South Africa </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "South Africa")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Tanzania </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Tanzania")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Zambia </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+var_list1 = c(colnames(total)[grepl("_primary$", colnames(total))]) 
+var_list1 = var_list1[2]
+
+var_list2 = c(colnames(total)[grepl("_secondary$", colnames(total))]) 
+var_list2 = var_list2[2]
+
+var_list3 = c(colnames(total)[grepl("_tertiary$", colnames(total))]) 
+
+var_list = c(var_list1, var_list2, var_list3)
+
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Zambia")
+
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Sector", labels = c("Primary", "Secondary", "Tertiary")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+

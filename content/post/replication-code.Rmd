@@ -1,0 +1,2053 @@
+---
+title: "IPUMS Data Cleaning Replication Code"
+author:
+  - Lorenzo Sileci^[All code and this website are developed and maintained by Lorenzo Sileci (LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; l.sileci@lse.ac.uk)]
+
+
+date: "01/06/2020"
+output: 
+  html_document
+summary: "Replication code to process IPUMS data and collapse it to administrative units."
+showDate: false
+gallery:
+    - http://i.imgur.com/6I7vRt9.png
+    
+autoThumbnailImage: yes
+thumbnailImagePosition: left
+---
+***
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+### Collapsing IPUMS Data at the lowest available geographic scale
+
+In the following, I illustrate how I have aggregated the IPUMS survey data at the finest available geographic scale (administrative level 2 for most countries, except Botswana - where only administrative levek 1 is available - and Rwanda - where only the last wave is available at the administrative 2 level, and hence data from said wave has been resampled to the administrative level 1).
+
+I use the Benin's last wave as an example of how the aggregation has been performed.
+
+First of all, data must be read into R:
+
+```{r}
+### BENIN ###
+
+library(tidyverse)
+
+# Import data from IPUMS
+
+if (!require("ipumsr")) stop("Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages('ipumsr')")
+
+ddi <- read_ipums_ddi("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/IPUMS_data/ipumsi_00030.xml")
+benin <- read_ipums_micro(ddi)
+
+# Examine variable names
+
+colnames(benin)
+
+# Inspect hh and person weights: in this instance they are all equal
+
+summary(benin$HHWT)
+summary(benin$PERWT)
+
+# Import IPUMS_GIS world level adm2 shapefile and restrict to Benin, renaming geolev2 variable for merging purposes
+
+benin.map <- sf::read_sf(dsn = "~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/world_geolev2_2019", layer = "world_geolev2_2019") %>%
+  filter(CNTRY_NAME == "Benin") %>%
+  rename(GEOLEV2 = "GEOLEVEL2") %>%
+  dplyr::select(-CNTRY_CODE, -BPL_CODE)
+```
+
+Optionally, in the `_wa` datasets, the waves get restricted to working age population only:
+
+```{r}
+
+# benin <- benin %>%
+#   filter(!AGE==999 & AGE > 14 & AGE < 65)
+
+```
+
+#### Population Shares
+
+I first calculate population counts for each administrative area by counting observations within each precinct. I then merge the dataset restricted to population with the map of Benin's administrative units, in order to be able to plot them. Here, I offer a spatial representation of the population distribution via a chloropleth map.
+
+```{r}
+# 1. Population counts
+
+benin_pop_2013 <- benin %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  tally(name = "population")
+
+# Merge with calculated shares
+
+benin.pop.2013.spatial <- merge(benin.map, benin_pop_2013, by = "GEOLEV2")
+rm(benin_pop_2013)
+
+# Plot Population Shares:
+
+ggplot() +
+  geom_sf(data = benin.pop.2013.spatial$geometry) +
+  geom_sf(data = benin.pop.2013.spatial, aes(fill=population)) +
+  scale_fill_viridis_c(option = "plasma") + theme_void()
+```
+
+
+#### Urban/Rural Shares
+
+As for in all categorical variables, in order to calculate geographical shares for each level of the variable, I first need to "dummify" each category. Here, I exclude observations labelled as "unknown" (the same will be done for all "not in universe" observations), and calculate 1/0 dummies for each level of the `URBAN` variable. Then, I aggregate the two dummies at the administrative level 2, and calculate the shares by multiplying them with the individual survey weights provided by IPUMS:
+
+```{r}
+
+# 1. URBAN/RURAL SHARES
+
+benin_ruralurb <- benin %>%
+  filter(!URBAN == 9) %>%
+  mutate(urban = ifelse(URBAN == 2, 1, 0),
+         rural = ifelse(URBAN == 1, 1, 0))
+
+# summarise for each district 
+
+benin_ru_2013 <- benin_ruralurb %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(urban = weighted.mean(urban, PERWT),
+            rural = weighted.mean(rural, PERWT))
+
+
+# Merge with calculated shares
+
+benin.ru.2013.spatial <- merge(benin.map, benin_ru_2013, by = "GEOLEV2")
+rm(benin_ruralurb, benin_ru_2013)
+
+# Plot Urban Shares:
+
+ggplot() +
+  geom_sf(data = benin.ru.2013.spatial$geometry) +
+  geom_sf(data = benin.ru.2013.spatial, aes(fill=urban)) +
+  scale_fill_viridis_c(option = "plasma")  + theme_void()
+
+```
+
+
+#### Residency Shares 
+
+Same thing for the share of resident surveyed individuals:
+
+```{r, message = FALSE}
+
+# 3. RESIDENCY SHARES
+
+benin_resident <- benin %>%
+  mutate(resident_present = ifelse(RESIDENT == 1, 1, 0),
+         resident_absent = ifelse(RESIDENT == 2, 1, 0),
+         resident_visitor = ifelse(RESIDENT == 3, 1, 0),
+         resident_defacto = ifelse(RESIDENT == 4, 1, 0),
+         resident_unknown = ifelse(RESIDENT == 9, 1, 0))
+
+# summarise for each district 
+
+benin_re_2013 <- benin_resident %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(resident_present = weighted.mean(resident_present, PERWT),
+            resident_absent  = weighted.mean(resident_absent,  PERWT),
+            resident_visitor = weighted.mean(resident_visitor, PERWT),
+            resident_defacto = weighted.mean(resident_defacto, PERWT),
+            resident_unknown = weighted.mean(resident_unknown, PERWT))
+
+# Merge with calculated shares
+
+benin.re.2013.spatial <- merge(benin.map, benin_re_2013, by = "GEOLEV2")
+rm(benin_resident, benin_re_2013)
+
+```
+
+#### Number of Children and Children under 5
+
+These two variables need not be dummified as the weighted mean per district already yields the average number of children and children under 5 years of age for each administrative area:
+
+```{r, message = FALSE}
+
+# 4. NUMBER OF CHILDREN DISTRICT SHARES
+
+# summarise for each district 
+
+benin_nchild_2013 <- benin %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(n_children = weighted.mean(NCHILD, PERWT))
+
+# Merge with calculated shares
+
+benin.nchild.2013.spatial <- merge(benin.map, benin_nchild_2013, by = "GEOLEV2")
+rm(benin_nchild_2013)
+
+
+# 5. NUMBER OF CHILDREN UNDER 5 DISTRICT SHARES
+
+# summarise for each district 
+
+benin_nchlt5_2013 <- benin %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(n_children_u5 = weighted.mean(NCHLT5, PERWT))
+
+# Merge with calculated shares
+
+benin.nchlt5.2013.spatial <- merge(benin.map, benin_nchlt5_2013, by = "GEOLEV2")
+rm(benin_nchlt5_2013)
+
+```
+
+#### Age
+
+Here I calculate mean age for each district, and exclude "not in universe" observations (`AGE == 999`):
+
+```{r, message = FALSE}
+
+# 6. AGE DISTRICT SHARES
+
+# summarise for each district 
+
+benin_age_2013 <- benin %>%
+  filter(!AGE==999 & YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(age = weighted.mean(AGE, PERWT))
+
+# Merge with calculated shares
+
+benin.age.2013.spatial <- merge(benin.map, benin_age_2013, by = "GEOLEV2")
+rm(benin_age_2013)
+```
+
+#### Gender
+
+Gender is a binary dummy without unknowns and NIU:
+
+```{r, message = FALSE}
+
+# 7. GENDER SHARES
+
+benin_sex <- benin %>%
+  mutate(female = ifelse(SEX == 2, 1, 0),
+         male = ifelse(SEX == 1, 1, 0))
+
+# summarise for each district 
+
+benin_sex_2013 <- benin_sex %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(female = weighted.mean(female, PERWT),
+            male = weighted.mean(male, PERWT))
+
+# Merge with calculated shares
+
+benin.sex.2013.spatial <- merge(benin.map, benin_sex_2013, by = "GEOLEV2")
+rm(benin_sex, benin_sex_2013)
+
+```
+
+#### Marital Status
+
+Here, I need to exclude both unknowns and NIU and to dummify the 4 categories of the marital status variable in order to calculate the incidence of each category for each administrative unit. 
+
+```{r, message=FALSE}
+benin_marst <- benin %>%
+  filter(!MARST == 0 & !MARST==9) %>%
+  mutate(single = ifelse(MARST == 1,1,0),
+         married = ifelse(MARST == 2, 1, 0),
+         divorced = ifelse(MARST == 3, 1, 0),
+         widowed = ifelse(MARST == 4, 1, 0))
+
+benin_marst_2013 <- benin_marst %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(single = weighted.mean(single, PERWT),
+            married = weighted.mean(married, PERWT),
+            divorced = weighted.mean(divorced, PERWT),
+            widowed = weighted.mean(widowed, PERWT))
+
+# Merge with calculated shares
+
+benin.marst.2013.spatial <- merge(benin.map, benin_marst_2013, by = "GEOLEV2")
+rm(benin_marst, benin_marst_2013)
+```
+
+
+#### Newborn Children and Surviving Newborn Children
+
+As before, I exclude unknown and NIU observations, dummify each category and calculate shares for each category:
+
+```{r, message=FALSE}
+# 9. NEWBORN CHILDREN SHARES
+
+benin_chborn <- benin %>%
+  filter(!CHBORN == 98 & !CHBORN==99) %>%
+  mutate(nochildren = ifelse(CHBORN == 0, 1, 0),
+         onechild = ifelse(CHBORN == 1, 1, 0),
+         twochildren = ifelse(CHBORN == 2, 1, 0),
+         threechildren = ifelse(CHBORN == 30, 1, 0))
+
+
+benin_chborn_2013 <- benin_chborn %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(nochildren = weighted.mean(nochildren, PERWT),
+            onechild = weighted.mean(onechild, PERWT),
+            twochildren = weighted.mean(twochildren, PERWT),
+            threechildren = weighted.mean(threechildren, PERWT))
+
+# Merge with calculated shares
+
+benin.chborn.2013.spatial <- merge(benin.map, benin_chborn_2013, by = "GEOLEV2")
+rm(benin_chborn, benin_chborn_2013)
+
+
+# 10. SURVIVING CHILDREN SHARES
+
+benin_chsurv <- benin %>%
+  filter(!CHSURV == 98 & !CHSURV==99) %>%
+  mutate(nosurv_children = ifelse(CHSURV == 0, 1, 0),
+         onesurv_children = ifelse(CHSURV ==1,1,0),
+         twosurv_children = ifelse(CHSURV == 2, 1, 0),
+         threesurv_children = ifelse(CHSURV == 30, 1, 0))
+
+benin_chsurv_2013 <- benin_chsurv %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(nosurv_children = weighted.mean(nosurv_children, PERWT),
+            onesurv_children = weighted.mean(onesurv_children, PERWT),
+            twosurv_children = weighted.mean(twosurv_children, PERWT),
+            threesurv_children = weighted.mean(threesurv_children, PERWT))
+
+# Merge with calculated shares
+
+benin.chsurv.2013.spatial <- merge(benin.map, benin_chsurv_2013, by = "GEOLEV2")
+rm(benin_chsurv, benin_chsurv_2013)
+```
+
+#### Last Year Births and Surviving Births 
+
+Exactly as before, I exclude unknown and NIU observations, dummify each category and calculate shares for each category:
+
+```{r, message=FALSE}
+
+# 11. LAST YEAR BIRTHS SHARES
+
+benin_births <- benin %>%
+  filter(!BIRTHSLYR == 9 & !BIRTHSLYR == 8) %>%
+  mutate(no_births = ifelse(BIRTHSLYR == 0, 1, 0),
+         one_three_births = ifelse(BIRTHSLYR ==1,1,0),
+         four_more_births = ifelse(BIRTHSLYR == 4, 1, 0))
+
+benin_births_2013 <- benin_births %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(no_births = weighted.mean(no_births, PERWT),
+            one_three_births = weighted.mean(one_three_births, PERWT),
+            four_more_births = weighted.mean(four_more_births, PERWT))
+
+# Merge with calculated shares
+
+benin.births.2013.spatial <- merge(benin.map, benin_births_2013, by = "GEOLEV2")
+rm(benin_births, benin_births_2013)
+
+
+# 12. LAST YEAR SURVIVING BIRTHS SHARES
+
+benin_birthsurv <- benin %>%
+  filter(!BIRTHSURV == 9 & !BIRTHSURV == 8) %>%
+  mutate(one_three_birthsurv = ifelse(BIRTHSURV ==1,1,0),
+         four_more_birthsurv = ifelse(BIRTHSURV == 4, 1, 0))
+
+benin_birthsurv_2013 <- benin_birthsurv %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(one_three_birthsurv = weighted.mean(one_three_birthsurv, PERWT),
+            four_more_birthsurv = weighted.mean(four_more_birthsurv, PERWT))
+
+# Merge with calculated shares
+
+benin.birthsurv.2013.spatial <- merge(benin.map, benin_birthsurv_2013, by = "GEOLEV2")
+rm(benin_birthsurv, benin_birthsurv_2013)
+
+```
+
+#### Mother Mortality
+
+```{r, message = F}
+
+# 12. MOTHER MORTALITY SHARES
+
+benin_mortmot <- benin %>%
+  filter(!MORTMOT == 9 & !MORTMOT == 8) %>%
+  mutate(mother_alive = ifelse(MORTMOT == 1, 1, 0),
+         mother_dead = ifelse(MORTMOT == 2, 1, 0))
+
+benin_mortmot_2013 <- benin_mortmot %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(mother_alive = weighted.mean(mother_alive, PERWT),
+            mother_dead = weighted.mean(mother_dead, PERWT))
+
+# Merge with calculated shares
+
+benin.mortmot.2013.spatial <- merge(benin.map, benin_mortmot_2013, by = "GEOLEV2")
+rm(benin_mortmot, benin_mortmot_2013)
+```
+
+#### Religion
+
+```{r, message = F}
+
+# 13. RELIGION SHARES
+
+benin_religion <- benin %>%
+  filter(!RELIGION == 0 & !RELIGION == 9) %>%
+  mutate(religion_atheist = ifelse(RELIGION == 1,1,0),
+         religion_buddhist = ifelse(RELIGION == 2,1,0),
+         religion_hindu = ifelse(RELIGION == 3, 1, 0),
+         religion_jewish = ifelse(RELIGION == 4, 1, 0),
+         religion_muslim = ifelse(RELIGION == 5, 1, 0),
+         religion_christian = ifelse(RELIGION == 6, 1, 0),
+         religion_other = ifelse(RELIGION == 7, 1, 0))
+
+benin_religion_2013 <- benin_religion %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(religion_atheist =weighted.mean(religion_atheist, PERWT),
+            religion_buddhist =weighted.mean(religion_buddhist, PERWT),
+            religion_hindu = weighted.mean(religion_hindu, PERWT),
+            religion_jewish = weighted.mean(religion_jewish, PERWT),
+            religion_muslim = weighted.mean(religion_muslim, PERWT),
+            religion_christian =weighted.mean(religion_christian, PERWT),
+            religion_other = weighted.mean(religion_other, PERWT))
+
+# Merge with calculated shares
+
+benin.religion.2013.spatial <- merge(benin.map, benin_religion_2013, by = "GEOLEV2")
+rm(benin_religion, benin_religion_2013)
+```
+
+#### Ethnicity and Language
+
+Here, there is a slight degree of added complexity. Ethnicity and language variables are indeed not uniform across IPUMS samples (i.e. different countries) due of course to the different ethnic and linguistic composition of each country. I directly compute the degree of ethnic and linguisitic fractionalisation at the lowest administrative level by adapting [Alesina et al. (2003), "Fractionalization"](https://scholar.harvard.edu/files/alesina/files/fractionalization.pdf) and calculating: $$ FRACT_j = 1 - \sum_{i=1}^{N}{s_{ij}^{2}} $$ where $FRACT_j$ is the fractionalisation index for administrative unit $j$, and $s_{ij}$ is the share of ethnic/linguistic group $i \in (1,..., N)$ in administrative unit $j$. My code first counts the number of individuals for each ethnic/linguistic group in each administrative unit, then calculates the share $s_{ij}$ by dividing it for the administrative unit's population, and finally applies Alesina et al. (2003)'s formula in order to calculate $FRACT_j$. I also produce a map of ethnic fractionalisation indices to illustrate the concept.
+
+```{r, message = F}
+# 14. ETHNICITY SHARES
+
+benin_ethnic <- benin %>%
+  filter(YEAR == 2013) %>%
+  count(GEOLEV2, ETHNICBJ, name = "frac") 
+
+benin_ethnic_2013 = merge(benin_ethnic, benin.pop.2013.spatial, by = "GEOLEV2") %>%
+  dplyr::select(-one_of(c("CNTRY_NAME", "ADMIN_NAME", "geometry"))) %>%
+  mutate(share_i2 = (frac/population)^2) %>%
+  group_by(GEOLEV2) %>%
+  summarise(ethnic_fract = 1-sum(share_i2))
+
+# merge with spatial units
+
+benin.ethnic.2013.spatial <- merge(benin.map, benin_ethnic_2013, by = "GEOLEV2")
+rm(benin_ethnic, benin_ethnic_2013)
+```
+```{r}
+
+# Plot the fractionalisation index
+
+ggplot() +
+  geom_sf(data = benin.ethnic.2013.spatial$geometry) +
+  geom_sf(data = benin.ethnic.2013.spatial, aes(fill=ethnic_fract)) +
+  scale_fill_viridis_c(option = "plasma") + theme_void()
+
+```
+
+```{r, message = F}
+# 15. LANGUAGE SHARES
+
+benin_lang <- benin %>%
+  filter(YEAR == 2013) %>%
+  count(GEOLEV2, LANGBJ, name = "frac") 
+
+benin_lang_2013 = merge(benin_lang, benin.pop.2013.spatial, by = "GEOLEV2") %>%
+  dplyr::select(-one_of(c("CNTRY_NAME", "ADMIN_NAME", "geometry"))) %>%
+  mutate(share_i2 = (frac/population)^2) %>%
+  group_by(GEOLEV2) %>%
+  summarise(lang_fract = 1-sum(share_i2))
+
+# merge with spatial units
+
+benin.lang.2013.spatial <- merge(benin.map, benin_lang_2013, by = "GEOLEV2")
+rm(benin_lang, benin_lang_2013)
+```
+
+#### School Attendance
+
+```{r, message = F}
+
+# 16. SCHOOL ATTENDANCE SHARES
+
+benin_school <- benin %>%
+  filter(!SCHOOL == 0 & !SCHOOL == 9) %>%
+  mutate(school_attend = ifelse(SCHOOL == 1, 1, 0),
+         school_no =  ifelse(SCHOOL == 2, 1, 0),
+         school_past = ifelse(SCHOOL == 3, 1, 0),
+         school_never = ifelse(SCHOOL == 4, 1, 0))
+
+benin_school_2013 <- benin_school %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(school_attend =weighted.mean(school_attend, PERWT),
+            school_no =weighted.mean(school_no, PERWT),
+            school_past = weighted.mean(school_past, PERWT),
+            school_never = weighted.mean(school_never, PERWT))
+
+# Merge with calculated shares
+
+benin.school.2013.spatial <- merge(benin.map, benin_school_2013, by = "GEOLEV2")
+rm(benin_school, benin_school_2013)
+```
+
+#### Literacy
+
+```{r, message = F}
+
+# 17. LITERACY SHARES
+
+benin_lit <- benin %>%
+  filter(!LIT == 0 & !LIT==9) %>%
+  mutate(literacy_no = ifelse(LIT == 1, 1, 0),
+         literacy_yes = ifelse(LIT == 2, 1, 0))
+
+
+benin_lit_2013 <- benin_lit %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(literacy_no =weighted.mean(literacy_no, PERWT),
+            literacy_yes =weighted.mean(literacy_yes, PERWT))
+
+# Merge with calculated shares
+
+benin.lit.2013.spatial <- merge(benin.map, benin_lit_2013, by = "GEOLEV2")
+rm(benin_lit, benin_lit_2013)
+```
+
+
+#### Educational Attainment
+
+```{r, message = F}
+
+# 18. EDUCATIONAL ATTAINMENT SHARES
+
+benin_edattain <- benin %>%
+  filter(!EDATTAIN == 0 & !EDATTAIN == 9) %>%
+  mutate(edattain_noprimary = ifelse(EDATTAIN == 1, 1, 0),
+         edattain_primary = ifelse(EDATTAIN == 2, 1, 0),
+         edattain_secondary = ifelse(EDATTAIN == 3, 1, 0),
+         edattain_university = ifelse(EDATTAIN == 4, 1, 0))
+
+
+benin_edattain_2013 <- benin_edattain %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(edattain_noprimary =weighted.mean(edattain_noprimary, PERWT),
+            edattain_primary =weighted.mean(edattain_primary, PERWT),
+            edattain_secondary = weighted.mean(edattain_secondary,PERWT),
+            edattain_university = weighted.mean(edattain_university,PERWT))
+
+# Merge with calculated shares
+
+benin.edattain.2013.spatial <- merge(benin.map, benin_edattain_2013, by = "GEOLEV2")
+rm(benin_edattain, benin_edattain_2013)
+```
+
+
+#### Years of Schooling
+
+```{r, message = F}
+
+# 19. YEARS OF SCHOOLING DISTRICT SHARES
+
+benin_yrschool <- benin %>%
+  filter(!YRSCHOOL == 99 & !YRSCHOOL == 90 & !YRSCHOOL == 91 & 
+           !YRSCHOOL == 92 & !YRSCHOOL == 93 & !YRSCHOOL == 94 & 
+           !YRSCHOOL == 95 & !YRSCHOOL == 96 & !YRSCHOOL == 98)
+
+# summarise for each district 
+
+benin_yrschool_2013 <- benin_yrschool %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(yrschool = weighted.mean(YRSCHOOL, PERWT))
+
+# Merge with calculated shares
+
+benin.yrschool.2013.spatial <- merge(benin.map, benin_yrschool_2013, by = "GEOLEV2")
+rm(benin_yrschool, benin_yrschool_2013)
+```
+
+
+#### Employment Status
+
+```{r, message = F}
+
+
+# 20. EMPLOYMENT SHARES
+
+benin_empstat <- benin %>%
+  filter(!EMPSTAT == 0 & !EMPSTAT==9) %>%
+  mutate(employment_yes = ifelse(EMPSTAT == 1, 1, 0),
+         employment_no  = ifelse(EMPSTAT == 2, 1, 0),
+         employment_inactive = ifelse(EMPSTAT == 3, 1, 0))
+
+
+benin_empstat_2013 <- benin_empstat %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(employment_yes =weighted.mean(employment_yes, PERWT),
+            employment_no = weighted.mean(employment_no,PERWT),
+            employment_inactive = weighted.mean(employment_inactive,PERWT))
+
+# Merge with calculated shares
+
+benin.empstat.2013.spatial <- merge(benin.map, benin_empstat_2013, by = "GEOLEV2")
+rm(benin_empstat, benin_empstat_2013)
+```
+
+#### Labour Force Participation
+
+```{r, message = F}
+
+
+# 21. LABOUR FORCE PARTICIPATION SHARES
+
+benin_labforce <- benin %>%
+  filter(!LABFORCE == 9 & !LABFORCE==8) %>%
+  mutate(labforce_no = ifelse(LABFORCE == 1, 1, 0),
+         labforce_yes = ifelse(LABFORCE == 2, 1, 0))
+
+benin_labforce_2013 <- benin_labforce %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(labforce_no =weighted.mean(labforce_no, PERWT),
+            labforce_yes = weighted.mean(labforce_yes,PERWT))
+
+# Merge with calculated shares
+
+benin.labforce.2013.spatial <- merge(benin.map, benin_labforce_2013, by = "GEOLEV2")
+rm(benin_labforce, benin_labforce_2013)
+```
+
+
+#### Occupation
+
+```{r, message = F}
+
+# 22. OCCUPATION SHARES
+
+benin_occisco <- benin %>%
+  filter(!OCCISCO == 99 & !OCCISCO==98 & !OCCISCO == 97) %>%
+  mutate(occupation_legislators = ifelse(OCCISCO == 1, 1, 0),
+         occupation_professionals = ifelse(OCCISCO == 2, 1, 0),
+         occupation_technicians = ifelse(OCCISCO == 3, 1, 0),
+         occupation_clerks = ifelse(OCCISCO == 4, 1, 0),
+         occupation_services = ifelse(OCCISCO == 5, 1, 0),
+         occupation_agrifish = ifelse(OCCISCO == 6, 1, 0),
+         occupation_crafts = ifelse(OCCISCO == 7, 1, 0),
+         occupation_plant = ifelse(OCCISCO == 8, 1, 0),
+         occupation_elementary = ifelse(OCCISCO == 9, 1, 0),
+         occupation_army = ifelse(OCCISCO == 10, 1, 0),
+         occupation_other = ifelse(OCCISCO == 11, 1, 0))
+
+benin_occisco_2013 <- benin_occisco %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(occupation_legislators = weighted.mean(occupation_legislators, PERWT),
+            occupation_professionals = weighted.mean(occupation_professionals, PERWT),
+            occupation_technicians = weighted.mean(occupation_technicians, PERWT),
+            occupation_clerks = weighted.mean(occupation_clerks, PERWT),
+            occupation_services =weighted.mean(occupation_services, PERWT),
+            occupation_agrifish =weighted.mean(occupation_agrifish, PERWT),
+            occupation_crafts = weighted.mean(occupation_crafts, PERWT),
+            occupation_plant = weighted.mean(occupation_plant, PERWT),
+            occupation_elementary = weighted.mean(occupation_elementary, PERWT),
+            occupation_army = weighted.mean(occupation_army, PERWT),
+            occupation_other = weighted.mean(occupation_other, PERWT))
+
+# Merge with calculated shares
+
+benin.occisco.2013.spatial <- merge(benin.map, benin_occisco_2013, by = "GEOLEV2")
+rm(benin_occisco, benin_occisco_2013)
+```
+
+#### Aggregated Sectors
+
+Here I calculate sectoral shares with three target categories: primary, secondary and tertiary sector. Therefore, I group agriculture and mining into the primary sector, manufacturing, construction and "other industry" into the secondary sector and all other categories into the tertiary.
+
+```{r, message = F}
+# 23. 3-WAY SECTORAL SHARES
+
+benin_sectors <- benin %>%
+  filter(!INDGEN == 0 & !INDGEN == 998 & !INDGEN== 999) %>%
+  mutate(sector_primary = ifelse(INDGEN == 10 | INDGEN == 20, 1, 0),
+         sector_secondary = ifelse(INDGEN == 30 | INDGEN == 50 | INDGEN == 130, 1, 0),
+         sector_tertiary = ifelse(INDGEN == 40 | INDGEN == 60 | INDGEN == 70|
+                                    INDGEN == 80 | INDGEN == 90 | INDGEN == 100|
+                                    INDGEN == 110| INDGEN == 111| INDGEN == 112|
+                                    INDGEN == 113| INDGEN == 114| INDGEN == 120, 1, 0))
+
+benin_sectors_2013 <- benin_sectors %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(sector_primary   =   weighted.mean(sector_primary, PERWT),
+            sector_secondary = weighted.mean(sector_secondary, PERWT),
+            sector_tertiary  =  weighted.mean(sector_tertiary, PERWT))
+
+# Merge with calculated shares
+
+benin.sectors.2013.spatial <- merge(benin.map, benin_sectors_2013, by = "GEOLEV2")
+rm(benin_sectors, benin_sectors_2013)
+```
+
+I then plot primary, secondary and tertiary shares by district:
+
+```{r}
+ggplot() +
+  geom_sf(data = benin.sectors.2013.spatial$geometry) +
+  geom_sf(data = benin.sectors.2013.spatial, aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "viridis")  + theme_void()
+
+ggplot() +
+  geom_sf(data = benin.sectors.2013.spatial$geometry) +
+  geom_sf(data = benin.sectors.2013.spatial, aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis")  + theme_void()
+
+
+ggplot() +
+  geom_sf(data = benin.sectors.2013.spatial$geometry) +
+  geom_sf(data = benin.sectors.2013.spatial, aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "viridis")  + theme_void()
+```
+
+The uneven spatial distribution of sectors is apparent, with the secondary and tertiary sectors concentrating in the southern, coastal part of the country (where the capital Porto-Novo is located) and the rest of the country devoted mainly to agriculture (with the exception of the district of Parakou, the most important city in the central part of Benin). 
+
+#### Disaggregated Sectoral Shares
+
+Here, sector are decomposed fully, with each category of the `INDGEN` variable accounting for one specific subsector.
+
+```{r, message = F}
+
+# 24. SECTORAL SHARES
+
+benin_indgen <- benin %>%
+  filter(!INDGEN == 0 & !INDGEN == 998 & !INDGEN== 999) %>%
+  mutate(sector_agriculture = ifelse(INDGEN == 10, 1, 0),
+         sector_mining = ifelse(INDGEN == 20, 1, 0),
+         sector_manufacturing = ifelse(INDGEN == 30, 1, 0),
+         sector_utilities = ifelse(INDGEN == 40, 1, 0),
+         sector_construction = ifelse(INDGEN == 50, 1, 0),
+         sector_trade = ifelse(INDGEN == 60, 1, 0),
+         sector_accommodation = ifelse(INDGEN == 70, 1, 0),
+         sector_transport = ifelse(INDGEN == 80, 1, 0),
+         sector_finance = ifelse(INDGEN == 90, 1, 0),
+         sector_public = ifelse(INDGEN == 100, 1, 0),
+         sector_unspec_services = ifelse(INDGEN == 110, 1, 0),
+         sector_business = ifelse(INDGEN == 111, 1, 0),
+         sector_education = ifelse(INDGEN == 112, 1, 0),
+         sector_health = ifelse(INDGEN == 113, 1, 0),
+         sector_other_services = ifelse(INDGEN == 114, 1, 0),
+         sector_private_hh = ifelse(INDGEN == 120, 1, 0),
+         sector_other_industry = ifelse(INDGEN == 130, 1, 0))
+
+
+benin_indgen_2013 <- benin_indgen %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(sector_agriculture =weighted.mean(sector_agriculture, PERWT),
+            sector_mining =weighted.mean(sector_mining, PERWT),
+            sector_manufacturing =weighted.mean(sector_manufacturing, PERWT),
+            sector_utilities =weighted.mean(sector_utilities, PERWT),
+            sector_construction =weighted.mean(sector_construction, PERWT),
+            sector_trade =weighted.mean(sector_trade, PERWT),
+            sector_accommodation =weighted.mean(sector_accommodation, PERWT),
+            sector_transport =weighted.mean(sector_transport, PERWT),
+            sector_finance =weighted.mean(sector_finance, PERWT),
+            sector_public = weighted.mean(sector_public, PERWT),
+            sector_unspec_services = weighted.mean(sector_unspec_services, PERWT),
+            sector_business = weighted.mean(sector_business, PERWT),
+            sector_education = weighted.mean(sector_education, PERWT),
+            sector_health = weighted.mean(sector_health, PERWT),
+            sector_other_services = weighted.mean(sector_other_services, PERWT),
+            sector_private_hh = weighted.mean(sector_private_hh, PERWT),
+            sector_other_industry = weighted.mean(sector_other_industry, PERWT))
+
+# Merge with calculated shares
+
+benin.indgen.2013.spatial <- merge(benin.map, benin_indgen_2013, by = "GEOLEV2")
+rm(benin_indgen, benin_indgen_2013)
+
+```
+
+#### Migration Shares
+
+As in [Hohmann (2018)](https://www.dropbox.com/s/tt6xtjp8q8ugzfd/__structural_JMP_jan_2018.pdf?dl=0), I encounter the problem of the different harmonisation of the migration variable. Indeed, different samples (i.e. different countries) have categorised internal migration differently. There are three main versions of the migration variable: `MIGRATE1`, `MIGRATE5` and `MIGRATEP`. The suffixes reflect how migration status is indexed for each individual in each wave. In particular, an individual is considered to be a migrant if they lived in a different administrative unit or a different country altogether at a particular point in the past: `MIGRATE1` registers this information 1 year in the past, `MIGRATE5` 5 years in the past, and `MIGRATEP` indicates whether the individual lived in a different administrative unit "at some point in the past".
+
+```{r, message = F}
+# 25. MIGRATION SHARES
+
+benin_migratep <- benin %>%
+  filter(!MIGRATEP == 0 & !MIGRATEP==99 & !MIGRATEP == 98) %>%
+  mutate(migrant_no = ifelse(MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         migrant_yes = ifelse(MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0))
+
+
+benin_migratep_2013 <- benin_migratep %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(migrant_no =weighted.mean(migrant_no, PERWT),
+            migrant_yes =weighted.mean(migrant_yes, PERWT))
+
+# Merge with calculated shares
+
+benin.migratep.2013.spatial <- merge(benin.map, benin_migratep_2013, by = "GEOLEV2")
+rm(benin_migratep, benin_migratep_2013)
+```
+
+#### Variables disaggregated by gender
+
+I then turn to the cross-products of the gender variable with employment status, occupation and disaggregated sectors. For each level of employment status, occupation and sector, I calculate the female and male share.
+
+
+```{r, message = F}
+# 26. Gender EMPLOYMENT SHARES
+# only select the variable "EMPSTAT" in order to aggregate its shares at adm2 level
+
+benin_gender_empstat <- benin %>%
+  filter(!EMPSTAT == 0 & !EMPSTAT==9) %>%
+  mutate(female_employment_yes =      ifelse(EMPSTAT == 1 & SEX == 2, 1, 0),
+         female_employment_no =       ifelse(EMPSTAT == 2 & SEX == 2, 1, 0),
+         female_employment_inactive = ifelse(EMPSTAT == 3 & SEX == 2, 1, 0),
+         male_employment_yes =      ifelse(EMPSTAT == 1 & SEX == 1, 1, 0),
+         male_employment_no =       ifelse(EMPSTAT == 2 & SEX == 1, 1, 0),
+         male_employment_inactive = ifelse(EMPSTAT == 3 & SEX == 1, 1, 0))
+
+# summarise for each district 
+
+benin_gender_empstat_2013 <- benin_gender_empstat %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(female_employment_yes =weighted.mean(female_employment_yes, PERWT),
+            female_employment_no = weighted.mean(female_employment_no,PERWT),
+            female_employment_inactive = weighted.mean(female_employment_inactive,PERWT),
+            male_employment_yes =weighted.mean(male_employment_yes, PERWT),
+            male_employment_no = weighted.mean(male_employment_no,PERWT),
+            male_employment_inactive = weighted.mean(male_employment_inactive,PERWT))
+
+# Merge with calculated shares
+
+benin.gender.empstat.2013.spatial <- merge(benin.map, benin_gender_empstat_2013, by = "GEOLEV2")
+rm(benin_gender_empstat, benin_gender_empstat_2013)
+
+
+# 27. GENDER OCCUPATION SHARES
+
+benin_gender_occisco <- benin %>%
+  filter(!OCCISCO == 99 & !OCCISCO==98 & !OCCISCO == 97) %>%
+  mutate(female_occupation_legislators    = ifelse(OCCISCO == 1 & SEX == 2, 1, 0),
+         female_occupation_professionals  = ifelse(OCCISCO == 2 & SEX == 2, 1, 0),
+         female_occupation_technicians    = ifelse(OCCISCO == 3 & SEX == 2, 1, 0),
+         female_occupation_clerks         = ifelse(OCCISCO == 4 & SEX == 2, 1, 0),
+         female_occupation_services       = ifelse(OCCISCO == 5 & SEX == 2, 1, 0),
+         female_occupation_agrifish       = ifelse(OCCISCO == 6 & SEX == 2, 1, 0),
+         female_occupation_crafts         = ifelse(OCCISCO == 7 & SEX == 2, 1, 0),
+         female_occupation_plant          = ifelse(OCCISCO == 8 & SEX == 2, 1, 0),
+         female_occupation_elementary     = ifelse(OCCISCO == 9 & SEX == 2, 1, 0),
+         female_occupation_army          = ifelse(OCCISCO == 10 & SEX == 2, 1, 0),
+         female_occupation_other         = ifelse(OCCISCO == 11 & SEX == 2, 1, 0),
+         male_occupation_legislators    = ifelse(OCCISCO == 1 & SEX == 1, 1, 0),
+         male_occupation_professionals  = ifelse(OCCISCO == 2 & SEX == 1, 1, 0),
+         male_occupation_technicians    = ifelse(OCCISCO == 3 & SEX == 1, 1, 0),
+         male_occupation_clerks         = ifelse(OCCISCO == 4 & SEX == 1, 1, 0),
+         male_occupation_services       = ifelse(OCCISCO == 5 & SEX == 1, 1, 0),
+         male_occupation_agrifish       = ifelse(OCCISCO == 6 & SEX == 1, 1, 0),
+         male_occupation_crafts         = ifelse(OCCISCO == 7 & SEX == 1, 1, 0),
+         male_occupation_plant          = ifelse(OCCISCO == 8 & SEX == 1, 1, 0),
+         male_occupation_elementary     = ifelse(OCCISCO == 9 & SEX == 1, 1, 0),
+         male_occupation_army          = ifelse(OCCISCO == 10 & SEX == 1, 1, 0),
+         male_occupation_other         = ifelse(OCCISCO == 11 & SEX == 1, 1, 0))
+
+# summarise for each district 
+
+benin_gender_occisco_2013 <- benin_gender_occisco %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(female_occupation_legislators = weighted.mean(female_occupation_legislators, PERWT),
+            female_occupation_professionals = weighted.mean(female_occupation_professionals, PERWT),
+            female_occupation_technicians = weighted.mean(female_occupation_technicians, PERWT),
+            female_occupation_clerks = weighted.mean(female_occupation_clerks, PERWT),
+            female_occupation_services =weighted.mean(female_occupation_services, PERWT),
+            female_occupation_agrifish =weighted.mean(female_occupation_agrifish, PERWT),
+            female_occupation_crafts = weighted.mean(female_occupation_crafts, PERWT),
+            female_occupation_plant = weighted.mean(female_occupation_plant, PERWT),
+            female_occupation_elementary = weighted.mean(female_occupation_elementary, PERWT),
+            female_occupation_army = weighted.mean(female_occupation_army, PERWT),
+            female_occupation_other = weighted.mean(female_occupation_other, PERWT),
+            male_occupation_legislators = weighted.mean(male_occupation_legislators, PERWT),
+            male_occupation_professionals = weighted.mean(male_occupation_professionals, PERWT),
+            male_occupation_technicians = weighted.mean(male_occupation_technicians, PERWT),
+            male_occupation_clerks = weighted.mean(male_occupation_clerks, PERWT),
+            male_occupation_services =weighted.mean(male_occupation_services, PERWT),
+            male_occupation_agrifish =weighted.mean(male_occupation_agrifish, PERWT),
+            male_occupation_crafts = weighted.mean(male_occupation_crafts, PERWT),
+            male_occupation_plant = weighted.mean(male_occupation_plant, PERWT),
+            male_occupation_elementary = weighted.mean(male_occupation_elementary, PERWT),
+            male_occupation_army = weighted.mean(male_occupation_army, PERWT),
+            male_occupation_other = weighted.mean(male_occupation_other, PERWT))
+
+# Merge with calculated shares
+
+benin.gender.occisco.2013.spatial <- merge(benin.map, benin_gender_occisco_2013, by = "GEOLEV2")
+rm(benin_gender_occisco, benin_gender_occisco_2013)
+
+
+# 28. GENDER SECTORAL SHARES
+
+benin_gender_indgen <- benin %>%
+  filter(!INDGEN == 0 & !INDGEN == 998 & !INDGEN== 999) %>%
+  mutate(sector_female_agriculture      = ifelse(INDGEN == 10 & SEX == 2, 1, 0),
+         sector_female_mining           = ifelse(INDGEN == 20 & SEX == 2, 1, 0),
+         sector_female_manufacturing    = ifelse(INDGEN == 30 & SEX == 2, 1, 0),
+         sector_female_utilities        = ifelse(INDGEN == 40 & SEX == 2, 1, 0),
+         sector_female_construction     = ifelse(INDGEN == 50 & SEX == 2, 1, 0),
+         sector_female_trade            = ifelse(INDGEN == 60 & SEX == 2, 1, 0),
+         sector_female_accommodation    = ifelse(INDGEN == 70 & SEX == 2, 1, 0),
+         sector_female_transport        = ifelse(INDGEN == 80 & SEX == 2, 1, 0),
+         sector_female_finance          = ifelse(INDGEN == 90 & SEX == 2, 1, 0),
+         sector_female_public          = ifelse(INDGEN == 100 & SEX == 2, 1, 0),
+         sector_female_unspec_services = ifelse(INDGEN == 110 & SEX == 2, 1, 0),
+         sector_female_business        = ifelse(INDGEN == 111 & SEX == 2, 1, 0),
+         sector_female_education       = ifelse(INDGEN == 112 & SEX == 2, 1, 0),
+         sector_female_health          = ifelse(INDGEN == 113 & SEX == 2, 1, 0),
+         sector_female_other_services  = ifelse(INDGEN == 114 & SEX == 2, 1, 0),
+         sector_female_private_hh      = ifelse(INDGEN == 120 & SEX == 2, 1, 0),
+         sector_female_other_industry  = ifelse(INDGEN == 130 & SEX == 2, 1, 0),
+         sector_male_agriculture      = ifelse(INDGEN == 10 & SEX == 1, 1, 0),
+         sector_male_mining           = ifelse(INDGEN == 20 & SEX == 1, 1, 0),
+         sector_male_manufacturing    = ifelse(INDGEN == 30 & SEX == 1, 1, 0),
+         sector_male_utilities        = ifelse(INDGEN == 40 & SEX == 1, 1, 0),
+         sector_male_construction     = ifelse(INDGEN == 50 & SEX == 1, 1, 0),
+         sector_male_trade            = ifelse(INDGEN == 60 & SEX == 1, 1, 0),
+         sector_male_accommodation    = ifelse(INDGEN == 70 & SEX == 1, 1, 0),
+         sector_male_transport        = ifelse(INDGEN == 80 & SEX == 1, 1, 0),
+         sector_male_finance          = ifelse(INDGEN == 90 & SEX == 1, 1, 0),
+         sector_male_public          = ifelse(INDGEN == 100 & SEX == 1, 1, 0),
+         sector_male_unspec_services = ifelse(INDGEN == 110 & SEX == 1, 1, 0),
+         sector_male_business        = ifelse(INDGEN == 111 & SEX == 1, 1, 0),
+         sector_male_education       = ifelse(INDGEN == 112 & SEX == 1, 1, 0),
+         sector_male_health          = ifelse(INDGEN == 113 & SEX == 1, 1, 0),
+         sector_male_other_services  = ifelse(INDGEN == 114 & SEX == 1, 1, 0),
+         sector_male_private_hh      = ifelse(INDGEN == 120 & SEX == 1, 1, 0),
+         sector_male_other_industry  = ifelse(INDGEN == 130 & SEX == 1, 1, 0))
+
+
+# summarise for each district 
+
+benin_gender_indgen_2013 <- benin_gender_indgen %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(sector_female_agriculture =weighted.mean(sector_female_agriculture, PERWT),
+            sector_female_mining =weighted.mean(sector_female_mining, PERWT),
+            sector_female_manufacturing =weighted.mean(sector_female_manufacturing, PERWT),
+            sector_female_utilities =weighted.mean(sector_female_utilities, PERWT),
+            sector_female_construction =weighted.mean(sector_female_construction, PERWT),
+            sector_female_trade =weighted.mean(sector_female_trade, PERWT),
+            sector_female_accommodation =weighted.mean(sector_female_accommodation, PERWT),
+            sector_female_transport =weighted.mean(sector_female_transport, PERWT),
+            sector_female_finance =weighted.mean(sector_female_finance, PERWT),
+            sector_female_public = weighted.mean(sector_female_public, PERWT),
+            sector_female_unspec_services = weighted.mean(sector_female_unspec_services, PERWT),
+            sector_female_business = weighted.mean(sector_female_business, PERWT),
+            sector_female_education = weighted.mean(sector_female_education, PERWT),
+            sector_female_health = weighted.mean(sector_female_health, PERWT),
+            sector_female_other_services = weighted.mean(sector_female_other_services, PERWT),
+            sector_female_private_hh = weighted.mean(sector_female_private_hh, PERWT),
+            sector_female_other_industry = weighted.mean(sector_female_other_industry, PERWT),
+            sector_male_agriculture =weighted.mean(sector_male_agriculture, PERWT),
+            sector_male_mining =weighted.mean(sector_male_mining, PERWT),
+            sector_male_manufacturing =weighted.mean(sector_male_manufacturing, PERWT),
+            sector_male_utilities =weighted.mean(sector_male_utilities, PERWT),
+            sector_male_construction =weighted.mean(sector_male_construction, PERWT),
+            sector_male_trade =weighted.mean(sector_male_trade, PERWT),
+            sector_male_accommodation =weighted.mean(sector_male_accommodation, PERWT),
+            sector_male_transport =weighted.mean(sector_male_transport, PERWT),
+            sector_male_finance =weighted.mean(sector_male_finance, PERWT),
+            sector_male_public = weighted.mean(sector_male_public, PERWT),
+            sector_male_unspec_services = weighted.mean(sector_male_unspec_services, PERWT),
+            sector_male_business = weighted.mean(sector_male_business, PERWT),
+            sector_male_education = weighted.mean(sector_male_education, PERWT),
+            sector_male_health = weighted.mean(sector_male_health, PERWT),
+            sector_male_other_services = weighted.mean(sector_male_other_services, PERWT),
+            sector_male_private_hh = weighted.mean(sector_male_private_hh, PERWT),
+            sector_male_other_industry = weighted.mean(sector_male_other_industry, PERWT))
+
+
+# Merge with calculated shares
+
+benin.gender.indgen.2013.spatial <- merge(benin.map, benin_gender_indgen_2013, by = "GEOLEV2")
+rm(benin_gender_indgen, benin_gender_indgen_2013)
+
+```
+
+#### Variables disaggregated by age
+
+Similarly I calculate the cross-products of the age variable with employment status, occupation and disaggregated sectors. I divide the sample into three age groups: youth (15-24), adults (25-54) and seniors (55-64), covering the entire span of working age population. For each of these three levels, I calculate the respective employment, occupation and sectoral shares.
+
+```{r, message = F}
+
+# 31. AGE-specific EMPLOYMENT SHARES
+# only select the variable "EMPSTAT" in order to aggregate its shares at adm2 level
+
+benin_age_empstat <- benin %>%
+  filter(!EMPSTAT == 0 & !EMPSTAT==9) %>%
+  mutate(youth_employment_yes       = ifelse(EMPSTAT == 1 & AGE < 25 & AGE > 14, 1, 0),
+         youth_employment_no        = ifelse(EMPSTAT == 2 & AGE < 25 & AGE > 14, 1, 0),
+         youth_employment_inactive  = ifelse(EMPSTAT == 3 & AGE < 25 & AGE > 14, 1, 0),
+         adult_employment_yes       = ifelse(EMPSTAT == 1 & AGE < 55 & AGE > 24, 1, 0),
+         adult_employment_no        = ifelse(EMPSTAT == 2 & AGE < 55 & AGE > 24, 1, 0),
+         adult_employment_inactive  = ifelse(EMPSTAT == 3 & AGE < 55 & AGE > 24, 1, 0),
+         senior_employment_yes      = ifelse(EMPSTAT == 1 & AGE > 54 & AGE < 65, 1, 0),
+         senior_employment_no       = ifelse(EMPSTAT == 2 & AGE > 54 & AGE < 65, 1, 0),
+         senior_employment_inactive = ifelse(EMPSTAT == 3 & AGE > 54 & AGE < 65, 1, 0))
+
+# summarise for each district 
+
+benin_age_empstat_2013 <- benin_age_empstat %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(youth_employment_yes =weighted.mean(youth_employment_yes, PERWT),
+            youth_employment_no = weighted.mean(youth_employment_no,PERWT),
+            youth_employment_inactive = weighted.mean(youth_employment_inactive,PERWT),
+            adult_employment_yes =weighted.mean(adult_employment_yes, PERWT),
+            adult_employment_no = weighted.mean(adult_employment_no,PERWT),
+            adult_employment_inactive = weighted.mean(adult_employment_inactive,PERWT),
+            senior_employment_yes =weighted.mean(senior_employment_yes, PERWT),
+            senior_employment_no = weighted.mean(senior_employment_no,PERWT),
+            senior_employment_inactive = weighted.mean(senior_employment_inactive,PERWT))
+
+
+# Merge with calculated shares
+
+benin.age.empstat.2013.spatial <- merge(benin.map, benin_age_empstat_2013, by = "GEOLEV2")
+rm(benin_age_empstat, benin_age_empstat_2013)
+
+
+# 34. AGE-specific OCCUPATION SHARES
+# only select the variable "OCCISCO" in order to aggregate its shares at adm2 level
+
+benin_age_occisco <- benin %>%
+  filter(!OCCISCO == 99 & !OCCISCO==98 & !OCCISCO == 97) %>%
+  mutate(youth_occupation_legislators   = ifelse(OCCISCO == 1 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_professionals = ifelse(OCCISCO == 2 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_technicians   = ifelse(OCCISCO == 3 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_clerks        = ifelse(OCCISCO == 4 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_services      = ifelse(OCCISCO == 5 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_agrifish      = ifelse(OCCISCO == 6 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_crafts        = ifelse(OCCISCO == 7 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_plant         = ifelse(OCCISCO == 8 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_elementary    = ifelse(OCCISCO == 9 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_army         = ifelse(OCCISCO == 10 & AGE < 25 & AGE > 14, 1, 0),
+         youth_occupation_other        = ifelse(OCCISCO == 11 & AGE < 25 & AGE > 14, 1, 0),
+         adult_occupation_legislators   = ifelse(OCCISCO == 1 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_professionals = ifelse(OCCISCO == 2 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_technicians   = ifelse(OCCISCO == 3 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_clerks        = ifelse(OCCISCO == 4 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_services      = ifelse(OCCISCO == 5 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_agrifish      = ifelse(OCCISCO == 6 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_crafts        = ifelse(OCCISCO == 7 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_plant         = ifelse(OCCISCO == 8 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_elementary    = ifelse(OCCISCO == 9 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_army         = ifelse(OCCISCO == 10 & AGE < 55 & AGE > 24, 1, 0),
+         adult_occupation_other        = ifelse(OCCISCO == 11 & AGE < 55 & AGE > 24, 1, 0),
+         senior_occupation_legislators   = ifelse(OCCISCO == 1 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_professionals = ifelse(OCCISCO == 2 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_technicians   = ifelse(OCCISCO == 3 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_clerks        = ifelse(OCCISCO == 4 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_services      = ifelse(OCCISCO == 5 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_agrifish      = ifelse(OCCISCO == 6 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_crafts        = ifelse(OCCISCO == 7 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_plant         = ifelse(OCCISCO == 8 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_elementary    = ifelse(OCCISCO == 9 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_army         = ifelse(OCCISCO == 10 & AGE > 54 & AGE < 65, 1, 0),
+         senior_occupation_other        = ifelse(OCCISCO == 11 & AGE > 54 & AGE < 65, 1, 0))
+
+# summarise for each district 
+
+benin_age_occisco_2013 <- benin_age_occisco %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(youth_occupation_legislators = weighted.mean(youth_occupation_legislators, PERWT),
+            youth_occupation_professionals = weighted.mean(youth_occupation_professionals, PERWT),
+            youth_occupation_technicians = weighted.mean(youth_occupation_technicians, PERWT),
+            youth_occupation_clerks = weighted.mean(youth_occupation_clerks, PERWT),
+            youth_occupation_services =weighted.mean(youth_occupation_services, PERWT),
+            youth_occupation_agrifish =weighted.mean(youth_occupation_agrifish, PERWT),
+            youth_occupation_crafts = weighted.mean(youth_occupation_crafts, PERWT),
+            youth_occupation_plant = weighted.mean(youth_occupation_plant, PERWT),
+            youth_occupation_elementary = weighted.mean(youth_occupation_elementary, PERWT),
+            youth_occupation_army = weighted.mean(youth_occupation_army, PERWT),
+            youth_occupation_other = weighted.mean(youth_occupation_other, PERWT),
+            adult_occupation_legislators = weighted.mean(adult_occupation_legislators, PERWT),
+            adult_occupation_professionals = weighted.mean(adult_occupation_professionals, PERWT),
+            adult_occupation_technicians = weighted.mean(adult_occupation_technicians, PERWT),
+            adult_occupation_clerks = weighted.mean(adult_occupation_clerks, PERWT),
+            adult_occupation_services =weighted.mean(adult_occupation_services, PERWT),
+            adult_occupation_agrifish =weighted.mean(adult_occupation_agrifish, PERWT),
+            adult_occupation_crafts = weighted.mean(adult_occupation_crafts, PERWT),
+            adult_occupation_plant = weighted.mean(adult_occupation_plant, PERWT),
+            adult_occupation_elementary = weighted.mean(adult_occupation_elementary, PERWT),
+            adult_occupation_army = weighted.mean(adult_occupation_army, PERWT),
+            adult_occupation_other = weighted.mean(adult_occupation_other, PERWT),
+            senior_occupation_legislators = weighted.mean(senior_occupation_legislators, PERWT),
+            senior_occupation_professionals = weighted.mean(senior_occupation_professionals, PERWT),
+            senior_occupation_technicians = weighted.mean(senior_occupation_technicians, PERWT),
+            senior_occupation_clerks = weighted.mean(senior_occupation_clerks, PERWT),
+            senior_occupation_services =weighted.mean(senior_occupation_services, PERWT),
+            senior_occupation_agrifish =weighted.mean(senior_occupation_agrifish, PERWT),
+            senior_occupation_crafts = weighted.mean(senior_occupation_crafts, PERWT),
+            senior_occupation_plant = weighted.mean(senior_occupation_plant, PERWT),
+            senior_occupation_elementary = weighted.mean(senior_occupation_elementary, PERWT),
+            senior_occupation_army = weighted.mean(senior_occupation_army, PERWT),
+            senior_occupation_other = weighted.mean(senior_occupation_other, PERWT))
+
+# Merge with calculated shares
+
+benin.age.occisco.2013.spatial <- merge(benin.map, benin_age_occisco_2013, by = "GEOLEV2")
+rm(benin_age_occisco, benin_age_occisco_2013)
+
+
+# 37. AGE-specific SECTORAL SHARES
+
+benin_age_indgen <- benin %>%
+  filter(!INDGEN == 0 & !INDGEN == 998 & !INDGEN== 999) %>%
+  mutate(sector_youth_agriculture      = ifelse(INDGEN == 10 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_mining           = ifelse(INDGEN == 20 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_manufacturing    = ifelse(INDGEN == 30 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_utilities        = ifelse(INDGEN == 40 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_construction     = ifelse(INDGEN == 50 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_trade            = ifelse(INDGEN == 60 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_accommodation    = ifelse(INDGEN == 70 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_transport        = ifelse(INDGEN == 80 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_finance          = ifelse(INDGEN == 90 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_public          = ifelse(INDGEN == 100 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_unspec_services = ifelse(INDGEN == 110 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_business        = ifelse(INDGEN == 111 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_education       = ifelse(INDGEN == 112 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_health          = ifelse(INDGEN == 113 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_other_services  = ifelse(INDGEN == 114 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_private_hh      = ifelse(INDGEN == 120 & AGE > 14 & AGE < 25, 1, 0),
+         sector_youth_other_industry  = ifelse(INDGEN == 130 & AGE > 14 & AGE < 25, 1, 0),
+         sector_adult_agriculture      = ifelse(INDGEN == 10 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_mining           = ifelse(INDGEN == 20 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_manufacturing    = ifelse(INDGEN == 30 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_utilities        = ifelse(INDGEN == 40 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_construction     = ifelse(INDGEN == 50 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_trade            = ifelse(INDGEN == 60 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_accommodation    = ifelse(INDGEN == 70 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_transport        = ifelse(INDGEN == 80 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_finance          = ifelse(INDGEN == 90 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_public          = ifelse(INDGEN == 100 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_unspec_services = ifelse(INDGEN == 110 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_business        = ifelse(INDGEN == 111 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_education       = ifelse(INDGEN == 112 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_health          = ifelse(INDGEN == 113 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_other_services  = ifelse(INDGEN == 114 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_private_hh      = ifelse(INDGEN == 120 & AGE > 24 & AGE < 55, 1, 0),
+         sector_adult_other_industry  = ifelse(INDGEN == 130 & AGE > 24 & AGE < 55, 1, 0),
+         sector_senior_agriculture      = ifelse(INDGEN == 10 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_mining           = ifelse(INDGEN == 20 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_manufacturing    = ifelse(INDGEN == 30 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_utilities        = ifelse(INDGEN == 40 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_construction     = ifelse(INDGEN == 50 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_trade            = ifelse(INDGEN == 60 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_accommodation    = ifelse(INDGEN == 70 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_transport        = ifelse(INDGEN == 80 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_finance          = ifelse(INDGEN == 90 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_public          = ifelse(INDGEN == 100 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_unspec_services = ifelse(INDGEN == 110 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_business        = ifelse(INDGEN == 111 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_education       = ifelse(INDGEN == 112 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_health          = ifelse(INDGEN == 113 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_other_services  = ifelse(INDGEN == 114 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_private_hh      = ifelse(INDGEN == 120 & AGE > 54 & AGE < 65, 1, 0),
+         sector_senior_other_industry  = ifelse(INDGEN == 130 & AGE > 54 & AGE < 65, 1, 0))
+
+# summarise for each district 
+
+benin_age_indgen_2013 <- benin_age_indgen %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(sector_youth_agriculture =weighted.mean(sector_youth_agriculture, PERWT),
+            sector_youth_mining =weighted.mean(sector_youth_mining, PERWT),
+            sector_youth_manufacturing =weighted.mean(sector_youth_manufacturing, PERWT),
+            sector_youth_utilities =weighted.mean(sector_youth_utilities, PERWT),
+            sector_youth_construction =weighted.mean(sector_youth_construction, PERWT),
+            sector_youth_trade =weighted.mean(sector_youth_trade, PERWT),
+            sector_youth_accommodation =weighted.mean(sector_youth_accommodation, PERWT),
+            sector_youth_transport =weighted.mean(sector_youth_transport, PERWT),
+            sector_youth_finance =weighted.mean(sector_youth_finance, PERWT),
+            sector_youth_public = weighted.mean(sector_youth_public, PERWT),
+            sector_youth_unspec_services = weighted.mean(sector_youth_unspec_services, PERWT),
+            sector_youth_business = weighted.mean(sector_youth_business, PERWT),
+            sector_youth_education = weighted.mean(sector_youth_education, PERWT),
+            sector_youth_health = weighted.mean(sector_youth_health, PERWT),
+            sector_youth_other_services = weighted.mean(sector_youth_other_services, PERWT),
+            sector_youth_private_hh = weighted.mean(sector_youth_private_hh, PERWT),
+            sector_youth_other_industry = weighted.mean(sector_youth_other_industry, PERWT),
+            sector_adult_agriculture =weighted.mean(sector_adult_agriculture, PERWT),
+            sector_adult_mining =weighted.mean(sector_adult_mining, PERWT),
+            sector_adult_manufacturing =weighted.mean(sector_adult_manufacturing, PERWT),
+            sector_adult_utilities =weighted.mean(sector_adult_utilities, PERWT),
+            sector_adult_construction =weighted.mean(sector_adult_construction, PERWT),
+            sector_adult_trade =weighted.mean(sector_adult_trade, PERWT),
+            sector_adult_accommodation =weighted.mean(sector_adult_accommodation, PERWT),
+            sector_adult_transport =weighted.mean(sector_adult_transport, PERWT),
+            sector_adult_finance =weighted.mean(sector_adult_finance, PERWT),
+            sector_adult_public = weighted.mean(sector_adult_public, PERWT),
+            sector_adult_unspec_services = weighted.mean(sector_adult_unspec_services, PERWT),
+            sector_adult_business = weighted.mean(sector_adult_business, PERWT),
+            sector_adult_education = weighted.mean(sector_adult_education, PERWT),
+            sector_adult_health = weighted.mean(sector_adult_health, PERWT),
+            sector_adult_other_services = weighted.mean(sector_adult_other_services, PERWT),
+            sector_adult_private_hh = weighted.mean(sector_adult_private_hh, PERWT),
+            sector_adult_other_industry = weighted.mean(sector_adult_other_industry, PERWT),
+            sector_senior_agriculture =weighted.mean(sector_senior_agriculture, PERWT),
+            sector_senior_mining =weighted.mean(sector_senior_mining, PERWT),
+            sector_senior_manufacturing =weighted.mean(sector_senior_manufacturing, PERWT),
+            sector_senior_utilities =weighted.mean(sector_senior_utilities, PERWT),
+            sector_senior_construction =weighted.mean(sector_senior_construction, PERWT),
+            sector_senior_trade =weighted.mean(sector_senior_trade, PERWT),
+            sector_senior_accommodation =weighted.mean(sector_senior_accommodation, PERWT),
+            sector_senior_transport =weighted.mean(sector_senior_transport, PERWT),
+            sector_senior_finance =weighted.mean(sector_senior_finance, PERWT),
+            sector_senior_public = weighted.mean(sector_senior_public, PERWT),
+            sector_senior_unspec_services = weighted.mean(sector_senior_unspec_services, PERWT),
+            sector_senior_business = weighted.mean(sector_senior_business, PERWT),
+            sector_senior_education = weighted.mean(sector_senior_education, PERWT),
+            sector_senior_health = weighted.mean(sector_senior_health, PERWT),
+            sector_senior_other_services = weighted.mean(sector_senior_other_services, PERWT),
+            sector_senior_private_hh = weighted.mean(sector_senior_private_hh, PERWT),
+            sector_senior_other_industry = weighted.mean(sector_senior_other_industry, PERWT))
+
+# Merge with calculated shares
+
+benin.age.indgen.2013.spatial <- merge(benin.map, benin_age_indgen_2013, by = "GEOLEV2")
+rm(benin_age_indgen, benin_age_indgen_2013)
+```
+
+#### Variables disaggregated by migration status
+
+I repeat the same exercise by interacting employment, occupation and sector with two categories of migration: migrant and native (i.e. non-migrant according to the definition of migration given above).
+
+```{r, message =F}
+# 40. MIGRANT EMPLOYMENT SHARES
+# only select the variable "EMPSTAT" in order to aggregate its shares at adm2 level
+
+benin_migrant_empstat <- benin %>%
+  filter(!EMPSTAT == 0 & !EMPSTAT==9) %>%
+  mutate(migrant_employment_yes      = ifelse(EMPSTAT == 1 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_employment_no       = ifelse(EMPSTAT == 2 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_employment_inactive = ifelse(EMPSTAT == 3 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         native_employment_yes       = ifelse(EMPSTAT == 1 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_employment_no        = ifelse(EMPSTAT == 2 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_employment_inactive  = ifelse(EMPSTAT == 3 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0))
+
+# summarise for each district 
+
+benin_migrant_empstat_2013 <- benin_migrant_empstat %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(migrant_employment_yes =weighted.mean(migrant_employment_yes, PERWT),
+            migrant_employment_no = weighted.mean(migrant_employment_no,PERWT),
+            migrant_employment_inactive = weighted.mean(migrant_employment_inactive,PERWT),
+            native_employment_yes =weighted.mean(native_employment_yes, PERWT),
+            native_employment_no = weighted.mean(native_employment_no,PERWT),
+            native_employment_inactive = weighted.mean(native_employment_inactive,PERWT))
+
+# Merge with calculated shares
+
+benin.migrant.empstat.2013.spatial <- merge(benin.map, benin_migrant_empstat_2013, by = "GEOLEV2")
+rm(benin_migrant_empstat, benin_migrant_empstat_2013)
+
+
+# 42. MIGRANT OCCUPATION SHARES
+
+benin_migrant_occisco <- benin %>%
+  filter(!OCCISCO == 99 & !OCCISCO==98 & !OCCISCO == 97) %>%
+  mutate(migrant_occupation_legislators   = ifelse(OCCISCO == 1  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_professionals = ifelse(OCCISCO == 2  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_technicians   = ifelse(OCCISCO == 3  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_clerks        = ifelse(OCCISCO == 4  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_services      = ifelse(OCCISCO == 5  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_agrifish      = ifelse(OCCISCO == 6  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_crafts        = ifelse(OCCISCO == 7  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_plant         = ifelse(OCCISCO == 8  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_elementary    = ifelse(OCCISCO == 9  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_army         = ifelse(OCCISCO == 10  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         migrant_occupation_other        = ifelse(OCCISCO == 11  & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         native_occupation_legislators   = ifelse(OCCISCO == 1 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_professionals = ifelse(OCCISCO == 2 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_technicians   = ifelse(OCCISCO == 3 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_clerks        = ifelse(OCCISCO == 4 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_services      = ifelse(OCCISCO == 5 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_agrifish      = ifelse(OCCISCO == 6 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_crafts        = ifelse(OCCISCO == 7 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_plant         = ifelse(OCCISCO == 8 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_elementary    = ifelse(OCCISCO == 9 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_army         = ifelse(OCCISCO == 10 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         native_occupation_other        = ifelse(OCCISCO == 11 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0))
+
+
+# summarise for each district 
+
+benin_migrant_occisco_2013 <- benin_migrant_occisco %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(migrant_occupation_legislators = weighted.mean(migrant_occupation_legislators, PERWT),
+            migrant_occupation_professionals = weighted.mean(migrant_occupation_professionals, PERWT),
+            migrant_occupation_technicians = weighted.mean(migrant_occupation_technicians, PERWT),
+            migrant_occupation_clerks = weighted.mean(migrant_occupation_clerks, PERWT),
+            migrant_occupation_services =weighted.mean(migrant_occupation_services, PERWT),
+            migrant_occupation_agrifish =weighted.mean(migrant_occupation_agrifish, PERWT),
+            migrant_occupation_crafts = weighted.mean(migrant_occupation_crafts, PERWT),
+            migrant_occupation_plant = weighted.mean(migrant_occupation_plant, PERWT),
+            migrant_occupation_elementary = weighted.mean(migrant_occupation_elementary, PERWT),
+            migrant_occupation_army = weighted.mean(migrant_occupation_army, PERWT),
+            migrant_occupation_other = weighted.mean(migrant_occupation_other, PERWT),
+            native_occupation_legislators = weighted.mean(native_occupation_legislators, PERWT),
+            native_occupation_professionals = weighted.mean(native_occupation_professionals, PERWT),
+            native_occupation_technicians = weighted.mean(native_occupation_technicians, PERWT),
+            native_occupation_clerks = weighted.mean(native_occupation_clerks, PERWT),
+            native_occupation_services =weighted.mean(native_occupation_services, PERWT),
+            native_occupation_agrifish =weighted.mean(native_occupation_agrifish, PERWT),
+            native_occupation_crafts = weighted.mean(native_occupation_crafts, PERWT),
+            native_occupation_plant = weighted.mean(native_occupation_plant, PERWT),
+            native_occupation_elementary = weighted.mean(native_occupation_elementary, PERWT),
+            native_occupation_army = weighted.mean(native_occupation_army, PERWT),
+            native_occupation_other = weighted.mean(native_occupation_other, PERWT))
+
+# Merge with calculated shares
+
+benin.migrant.occisco.2013.spatial <- merge(benin.map, benin_migrant_occisco_2013, by = "GEOLEV2")
+rm(benin_migrant_occisco, benin_migrant_occisco_2013)
+
+
+# 44. MIGRANT SECTORAL SHARES
+
+benin_migrant_indgen <- benin %>%
+  filter(!INDGEN == 0 & !INDGEN == 998 & !INDGEN== 999) %>%
+  mutate(sector_migrant_agriculture      = ifelse(INDGEN == 10 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_mining           = ifelse(INDGEN == 20 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_manufacturing    = ifelse(INDGEN == 30 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_utilities        = ifelse(INDGEN == 40 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_construction     = ifelse(INDGEN == 50 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_trade            = ifelse(INDGEN == 60 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_accommodation    = ifelse(INDGEN == 70 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_transport        = ifelse(INDGEN == 80 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_finance          = ifelse(INDGEN == 90 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_public          = ifelse(INDGEN == 100 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_unspec_services = ifelse(INDGEN == 110 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_business        = ifelse(INDGEN == 111 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_education       = ifelse(INDGEN == 112 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_health          = ifelse(INDGEN == 113 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_other_services  = ifelse(INDGEN == 114 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_private_hh      = ifelse(INDGEN == 120 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_migrant_other_industry  = ifelse(INDGEN == 130 & MIGRATEP == 12 | MIGRATEP == 20 | MIGRATEP == 30, 1, 0),
+         sector_native_agriculture      = ifelse(INDGEN == 10 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_mining           = ifelse(INDGEN == 20 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_manufacturing    = ifelse(INDGEN == 30 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_utilities        = ifelse(INDGEN == 40 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_construction     = ifelse(INDGEN == 50 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_trade            = ifelse(INDGEN == 60 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_accommodation    = ifelse(INDGEN == 70 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_transport        = ifelse(INDGEN == 80 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_finance          = ifelse(INDGEN == 90 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_public          = ifelse(INDGEN == 100 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_unspec_services = ifelse(INDGEN == 110 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_business        = ifelse(INDGEN == 111 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_education       = ifelse(INDGEN == 112 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_health          = ifelse(INDGEN == 113 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_other_services  = ifelse(INDGEN == 114 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_private_hh      = ifelse(INDGEN == 120 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0),
+         sector_native_other_industry  = ifelse(INDGEN == 130 & MIGRATEP == 10 | MIGRATEP == 11, 1, 0))
+
+
+# summarise for each district 
+
+benin_migrant_indgen_2013 <- benin_migrant_indgen %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(sector_migrant_agriculture =weighted.mean(sector_migrant_agriculture, PERWT),
+            sector_migrant_mining =weighted.mean(sector_migrant_mining, PERWT),
+            sector_migrant_manufacturing =weighted.mean(sector_migrant_manufacturing, PERWT),
+            sector_migrant_utilities =weighted.mean(sector_migrant_utilities, PERWT),
+            sector_migrant_construction =weighted.mean(sector_migrant_construction, PERWT),
+            sector_migrant_trade =weighted.mean(sector_migrant_trade, PERWT),
+            sector_migrant_accommodation =weighted.mean(sector_migrant_accommodation, PERWT),
+            sector_migrant_transport =weighted.mean(sector_migrant_transport, PERWT),
+            sector_migrant_finance =weighted.mean(sector_migrant_finance, PERWT),
+            sector_migrant_public = weighted.mean(sector_migrant_public, PERWT),
+            sector_migrant_unspec_services = weighted.mean(sector_migrant_unspec_services, PERWT),
+            sector_migrant_business = weighted.mean(sector_migrant_business, PERWT),
+            sector_migrant_education = weighted.mean(sector_migrant_education, PERWT),
+            sector_migrant_health = weighted.mean(sector_migrant_health, PERWT),
+            sector_migrant_other_services = weighted.mean(sector_migrant_other_services, PERWT),
+            sector_migrant_private_hh = weighted.mean(sector_migrant_private_hh, PERWT),
+            sector_migrant_other_industry = weighted.mean(sector_migrant_other_industry, PERWT),
+            sector_native_agriculture =weighted.mean(sector_native_agriculture, PERWT),
+            sector_native_mining =weighted.mean(sector_native_mining, PERWT),
+            sector_native_manufacturing =weighted.mean(sector_native_manufacturing, PERWT),
+            sector_native_utilities =weighted.mean(sector_native_utilities, PERWT),
+            sector_native_construction =weighted.mean(sector_native_construction, PERWT),
+            sector_native_trade =weighted.mean(sector_native_trade, PERWT),
+            sector_native_accommodation =weighted.mean(sector_native_accommodation, PERWT),
+            sector_native_transport =weighted.mean(sector_native_transport, PERWT),
+            sector_native_finance =weighted.mean(sector_native_finance, PERWT),
+            sector_native_public = weighted.mean(sector_native_public, PERWT),
+            sector_native_unspec_services = weighted.mean(sector_native_unspec_services, PERWT),
+            sector_native_business = weighted.mean(sector_native_business, PERWT),
+            sector_native_education = weighted.mean(sector_native_education, PERWT),
+            sector_native_health = weighted.mean(sector_native_health, PERWT),
+            sector_native_other_services = weighted.mean(sector_native_other_services, PERWT),
+            sector_native_private_hh = weighted.mean(sector_native_private_hh, PERWT),
+            sector_native_other_industry = weighted.mean(sector_native_other_industry, PERWT))
+
+# Merge with calculated shares
+
+benin.migrant.indgen.2013.spatial <- merge(benin.map, benin_migrant_indgen_2013, by = "GEOLEV2")
+rm(benin_migrant_indgen, benin_migrant_indgen_2013)
+```
+
+#### Cross-products between sector and educational attainment
+
+I compute similar cross-products for sector and educational attainment, in order to be able to examine the distribution of sectors across different levels of education.
+
+```{r, message = F}
+
+benin_edu_indgen <- benin %>%
+  filter(!INDGEN == 0 & !INDGEN == 998 & !INDGEN== 999) %>%
+  mutate(edu_noprimary_agriculture      = ifelse(INDGEN == 10 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_mining           = ifelse(INDGEN == 20 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_manufacturing    = ifelse(INDGEN == 30 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_utilities        = ifelse(INDGEN == 40 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_construction     = ifelse(INDGEN == 50 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_trade            = ifelse(INDGEN == 60 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_accommodation    = ifelse(INDGEN == 70 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_transport        = ifelse(INDGEN == 80 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_finance          = ifelse(INDGEN == 90 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_public          = ifelse(INDGEN == 100 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_unspec_services = ifelse(INDGEN == 110 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_business        = ifelse(INDGEN == 111 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_education       = ifelse(INDGEN == 112 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_health          = ifelse(INDGEN == 113 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_other_services  = ifelse(INDGEN == 114 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_private_hh      = ifelse(INDGEN == 120 & EDATTAIN == 1, 1, 0),
+         edu_noprimary_other_industry  = ifelse(INDGEN == 130 & EDATTAIN == 1, 1, 0),
+         edu_primary_agriculture       = ifelse(INDGEN == 10 & EDATTAIN == 2, 1, 0),
+         edu_primary_mining            = ifelse(INDGEN == 20 & EDATTAIN == 2, 1, 0),
+         edu_primary_manufacturing     = ifelse(INDGEN == 30 & EDATTAIN == 2, 1, 0),
+         edu_primary_utilities         = ifelse(INDGEN == 40 & EDATTAIN == 2, 1, 0),
+         edu_primary_construction      = ifelse(INDGEN == 50 & EDATTAIN == 2, 1, 0),
+         edu_primary_trade             = ifelse(INDGEN == 60 & EDATTAIN == 2, 1, 0),
+         edu_primary_accommodation     = ifelse(INDGEN == 70 & EDATTAIN == 2, 1, 0),
+         edu_primary_transport         = ifelse(INDGEN == 80 & EDATTAIN == 2, 1, 0),
+         edu_primary_finance           = ifelse(INDGEN == 90 & EDATTAIN == 2, 1, 0),
+         edu_primary_public           = ifelse(INDGEN == 100 & EDATTAIN == 2, 1, 0),
+         edu_primary_unspec_services  = ifelse(INDGEN == 110 & EDATTAIN == 2, 1, 0),
+         edu_primary_business         = ifelse(INDGEN == 111 & EDATTAIN == 2, 1, 0),
+         edu_primary_education        = ifelse(INDGEN == 112 & EDATTAIN == 2, 1, 0),
+         edu_primary_health           = ifelse(INDGEN == 113 & EDATTAIN == 2, 1, 0),
+         edu_primary_other_services   = ifelse(INDGEN == 114 & EDATTAIN == 2, 1, 0),
+         edu_primary_private_hh       = ifelse(INDGEN == 120 & EDATTAIN == 2, 1, 0),
+         edu_primary_other_industry   = ifelse(INDGEN == 130 & EDATTAIN == 2, 1, 0),
+         edu_secondary_agriculture     = ifelse(INDGEN == 10 & EDATTAIN == 3, 1, 0),
+         edu_secondary_mining          = ifelse(INDGEN == 20 & EDATTAIN == 3, 1, 0),
+         edu_secondary_manufacturing   = ifelse(INDGEN == 30 & EDATTAIN == 3, 1, 0),
+         edu_secondary_utilities       = ifelse(INDGEN == 40 & EDATTAIN == 3, 1, 0),
+         edu_secondary_construction    = ifelse(INDGEN == 50 & EDATTAIN == 3, 1, 0),
+         edu_secondary_trade           = ifelse(INDGEN == 60 & EDATTAIN == 3, 1, 0),
+         edu_secondary_accommodation   = ifelse(INDGEN == 70 & EDATTAIN == 3, 1, 0),
+         edu_secondary_transport       = ifelse(INDGEN == 80 & EDATTAIN == 3, 1, 0),
+         edu_secondary_finance         = ifelse(INDGEN == 90 & EDATTAIN == 3, 1, 0),
+         edu_secondary_public         = ifelse(INDGEN == 100 & EDATTAIN == 3, 1, 0),
+         edu_secondary_unspec_services= ifelse(INDGEN == 110 & EDATTAIN == 3, 1, 0),
+         edu_secondary_business       = ifelse(INDGEN == 111 & EDATTAIN == 3, 1, 0),
+         edu_secondary_education      = ifelse(INDGEN == 112 & EDATTAIN == 3, 1, 0),
+         edu_secondary_health         = ifelse(INDGEN == 113 & EDATTAIN == 3, 1, 0),
+         edu_secondary_other_services = ifelse(INDGEN == 114 & EDATTAIN == 3, 1, 0),
+         edu_secondary_private_hh     = ifelse(INDGEN == 120 & EDATTAIN == 3, 1, 0),
+         edu_secondary_other_industry = ifelse(INDGEN == 130 & EDATTAIN == 3, 1, 0),
+         edu_university_agriculture     = ifelse(INDGEN == 10 & EDATTAIN == 4, 1, 0),
+         edu_university_mining          = ifelse(INDGEN == 20 & EDATTAIN == 4, 1, 0),
+         edu_university_manufacturing   = ifelse(INDGEN == 30 & EDATTAIN == 4, 1, 0),
+         edu_university_utilities       = ifelse(INDGEN == 40 & EDATTAIN == 4, 1, 0),
+         edu_university_construction    = ifelse(INDGEN == 50 & EDATTAIN == 4, 1, 0),
+         edu_university_trade           = ifelse(INDGEN == 60 & EDATTAIN == 4, 1, 0),
+         edu_university_accommodation   = ifelse(INDGEN == 70 & EDATTAIN == 4, 1, 0),
+         edu_university_transport       = ifelse(INDGEN == 80 & EDATTAIN == 4, 1, 0),
+         edu_university_finance         = ifelse(INDGEN == 90 & EDATTAIN == 4, 1, 0),
+         edu_university_public         = ifelse(INDGEN == 100 & EDATTAIN == 4, 1, 0),
+         edu_university_unspec_services= ifelse(INDGEN == 110 & EDATTAIN == 4, 1, 0),
+         edu_university_business       = ifelse(INDGEN == 111 & EDATTAIN == 4, 1, 0),
+         edu_university_education      = ifelse(INDGEN == 112 & EDATTAIN == 4, 1, 0),
+         edu_university_health         = ifelse(INDGEN == 113 & EDATTAIN == 4, 1, 0),
+         edu_university_other_services = ifelse(INDGEN == 114 & EDATTAIN == 4, 1, 0),
+         edu_university_private_hh     = ifelse(INDGEN == 120 & EDATTAIN == 4, 1, 0),
+         edu_university_other_industry = ifelse(INDGEN == 130 & EDATTAIN == 4, 1, 0))
+
+# summarise for each district 
+
+benin_edu_indgen_2013 <- benin_edu_indgen %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(edu_noprimary_agriculture =weighted.mean(edu_noprimary_agriculture, PERWT),
+            edu_noprimary_mining =weighted.mean(edu_noprimary_mining, PERWT),
+            edu_noprimary_manufacturing =weighted.mean(edu_noprimary_manufacturing, PERWT),
+            edu_noprimary_utilities =weighted.mean(edu_noprimary_utilities, PERWT),
+            edu_noprimary_construction =weighted.mean(edu_noprimary_construction, PERWT),
+            edu_noprimary_trade =weighted.mean(edu_noprimary_trade, PERWT),
+            edu_noprimary_accommodation =weighted.mean(edu_noprimary_accommodation, PERWT),
+            edu_noprimary_transport =weighted.mean(edu_noprimary_transport, PERWT),
+            edu_noprimary_finance =weighted.mean(edu_noprimary_finance, PERWT),
+            edu_noprimary_public = weighted.mean(edu_noprimary_public, PERWT),
+            edu_noprimary_unspec_services = weighted.mean(edu_noprimary_unspec_services, PERWT),
+            edu_noprimary_business = weighted.mean(edu_noprimary_business, PERWT),
+            edu_noprimary_education = weighted.mean(edu_noprimary_education, PERWT),
+            edu_noprimary_health = weighted.mean(edu_noprimary_health, PERWT),
+            edu_noprimary_other_services = weighted.mean(edu_noprimary_other_services, PERWT),
+            edu_noprimary_private_hh = weighted.mean(edu_noprimary_private_hh, PERWT),
+            edu_noprimary_other_industry = weighted.mean(edu_noprimary_other_industry, PERWT),
+            edu_primary_agriculture =weighted.mean(edu_primary_agriculture, PERWT),
+            edu_primary_mining =weighted.mean(edu_primary_mining, PERWT),
+            edu_primary_manufacturing =weighted.mean(edu_primary_manufacturing, PERWT),
+            edu_primary_utilities =weighted.mean(edu_primary_utilities, PERWT),
+            edu_primary_construction =weighted.mean(edu_primary_construction, PERWT),
+            edu_primary_trade =weighted.mean(edu_primary_trade, PERWT),
+            edu_primary_accommodation =weighted.mean(edu_primary_accommodation, PERWT),
+            edu_primary_transport =weighted.mean(edu_primary_transport, PERWT),
+            edu_primary_finance =weighted.mean(edu_primary_finance, PERWT),
+            edu_primary_public = weighted.mean(edu_primary_public, PERWT),
+            edu_primary_unspec_services = weighted.mean(edu_primary_unspec_services, PERWT),
+            edu_primary_business = weighted.mean(edu_primary_business, PERWT),
+            edu_primary_education = weighted.mean(edu_primary_education, PERWT),
+            edu_primary_health = weighted.mean(edu_primary_health, PERWT),
+            edu_primary_other_services = weighted.mean(edu_primary_other_services, PERWT),
+            edu_primary_private_hh = weighted.mean(edu_primary_private_hh, PERWT),
+            edu_primary_other_industry = weighted.mean(edu_primary_other_industry, PERWT),
+            edu_secondary_agriculture =weighted.mean(edu_secondary_agriculture, PERWT),
+            edu_secondary_mining =weighted.mean(edu_secondary_mining, PERWT),
+            edu_secondary_manufacturing =weighted.mean(edu_secondary_manufacturing, PERWT),
+            edu_secondary_utilities =weighted.mean(edu_secondary_utilities, PERWT),
+            edu_secondary_construction =weighted.mean(edu_secondary_construction, PERWT),
+            edu_secondary_trade =weighted.mean(edu_secondary_trade, PERWT),
+            edu_secondary_accommodation =weighted.mean(edu_secondary_accommodation, PERWT),
+            edu_secondary_transport =weighted.mean(edu_secondary_transport, PERWT),
+            edu_secondary_finance =weighted.mean(edu_secondary_finance, PERWT),
+            edu_secondary_public = weighted.mean(edu_secondary_public, PERWT),
+            edu_secondary_unspec_services = weighted.mean(edu_secondary_unspec_services, PERWT),
+            edu_secondary_business = weighted.mean(edu_secondary_business, PERWT),
+            edu_secondary_education = weighted.mean(edu_secondary_education, PERWT),
+            edu_secondary_health = weighted.mean(edu_secondary_health, PERWT),
+            edu_secondary_other_services = weighted.mean(edu_secondary_other_services, PERWT),
+            edu_secondary_private_hh = weighted.mean(edu_secondary_private_hh, PERWT),
+            edu_secondary_other_industry = weighted.mean(edu_secondary_other_industry, PERWT),
+            edu_university_agriculture =weighted.mean(edu_university_agriculture, PERWT),
+            edu_university_mining =weighted.mean(edu_university_mining, PERWT),
+            edu_university_manufacturing =weighted.mean(edu_university_manufacturing, PERWT),
+            edu_university_utilities =weighted.mean(edu_university_utilities, PERWT),
+            edu_university_construction =weighted.mean(edu_university_construction, PERWT),
+            edu_university_trade =weighted.mean(edu_university_trade, PERWT),
+            edu_university_accommodation =weighted.mean(edu_university_accommodation, PERWT),
+            edu_university_transport =weighted.mean(edu_university_transport, PERWT),
+            edu_university_finance =weighted.mean(edu_university_finance, PERWT),
+            edu_university_public = weighted.mean(edu_university_public, PERWT),
+            edu_university_unspec_services = weighted.mean(edu_university_unspec_services, PERWT),
+            edu_university_business = weighted.mean(edu_university_business, PERWT),
+            edu_university_education = weighted.mean(edu_university_education, PERWT),
+            edu_university_health = weighted.mean(edu_university_health, PERWT),
+            edu_university_other_services = weighted.mean(edu_university_other_services, PERWT),
+            edu_university_private_hh = weighted.mean(edu_university_private_hh, PERWT),
+            edu_university_other_industry = weighted.mean(edu_university_other_industry, PERWT))
+
+# Merge with calculated shares
+
+benin.edu.indgen.2013.spatial <- merge(benin.map, benin_edu_indgen_2013, by = "GEOLEV2")
+rm(benin_edu_indgen, benin_edu_indgen_2013)
+
+```
+
+#### Cross-products between sector and occupation
+
+I compute similar cross-products for sector and occupation, in order to be able to analyse the distribution of occupational roles across sectors.
+
+```{r, message = F}
+
+benin_occisco_indgen <- benin %>%
+  filter(!INDGEN == 0 & !INDGEN == 998 & !INDGEN== 999) %>%
+  mutate(legislators_agriculture      = ifelse(INDGEN == 10 & OCCISCO == 1, 1, 0),
+         legislators_mining           = ifelse(INDGEN == 20 & OCCISCO == 1, 1, 0),
+         legislators_manufacturing    = ifelse(INDGEN == 30 & OCCISCO == 1, 1, 0),
+         legislators_utilities        = ifelse(INDGEN == 40 & OCCISCO == 1, 1, 0),
+         legislators_construction     = ifelse(INDGEN == 50 & OCCISCO == 1, 1, 0),
+         legislators_trade            = ifelse(INDGEN == 60 & OCCISCO == 1, 1, 0),
+         legislators_accommodation    = ifelse(INDGEN == 70 & OCCISCO == 1, 1, 0),
+         legislators_transport        = ifelse(INDGEN == 80 & OCCISCO == 1, 1, 0),
+         legislators_finance          = ifelse(INDGEN == 90 & OCCISCO == 1, 1, 0),
+         legislators_public          = ifelse(INDGEN == 100 & OCCISCO == 1, 1, 0),
+         legislators_unspec_services = ifelse(INDGEN == 110 & OCCISCO == 1, 1, 0),
+         legislators_business        = ifelse(INDGEN == 111 & OCCISCO == 1, 1, 0),
+         legislators_education       = ifelse(INDGEN == 112 & OCCISCO == 1, 1, 0),
+         legislators_health          = ifelse(INDGEN == 113 & OCCISCO == 1, 1, 0),
+         legislators_other_services  = ifelse(INDGEN == 114 & OCCISCO == 1, 1, 0),
+         legislators_private_hh      = ifelse(INDGEN == 120 & OCCISCO == 1, 1, 0),
+         legislators_other_industry  = ifelse(INDGEN == 130 & OCCISCO == 1, 1, 0),
+         professionals_agriculture       = ifelse(INDGEN == 10 & OCCISCO == 2, 1, 0),
+         professionals_mining            = ifelse(INDGEN == 20 & OCCISCO == 2, 1, 0),
+         professionals_manufacturing     = ifelse(INDGEN == 30 & OCCISCO == 2, 1, 0),
+         professionals_utilities         = ifelse(INDGEN == 40 & OCCISCO == 2, 1, 0),
+         professionals_construction      = ifelse(INDGEN == 50 & OCCISCO == 2, 1, 0),
+         professionals_trade             = ifelse(INDGEN == 60 & OCCISCO == 2, 1, 0),
+         professionals_accommodation     = ifelse(INDGEN == 70 & OCCISCO == 2, 1, 0),
+         professionals_transport         = ifelse(INDGEN == 80 & OCCISCO == 2, 1, 0),
+         professionals_finance           = ifelse(INDGEN == 90 & OCCISCO == 2, 1, 0),
+         professionals_public           = ifelse(INDGEN == 100 & OCCISCO == 2, 1, 0),
+         professionals_unspec_services  = ifelse(INDGEN == 110 & OCCISCO == 2, 1, 0),
+         professionals_business         = ifelse(INDGEN == 111 & OCCISCO == 2, 1, 0),
+         professionals_education        = ifelse(INDGEN == 112 & OCCISCO == 2, 1, 0),
+         professionals_health           = ifelse(INDGEN == 113 & OCCISCO == 2, 1, 0),
+         professionals_other_services   = ifelse(INDGEN == 114 & OCCISCO == 2, 1, 0),
+         professionals_private_hh       = ifelse(INDGEN == 120 & OCCISCO == 2, 1, 0),
+         professionals_other_industry   = ifelse(INDGEN == 130 & OCCISCO == 2, 1, 0),
+         technicians_agriculture     = ifelse(INDGEN == 10 & OCCISCO == 3, 1, 0),
+         technicians_mining          = ifelse(INDGEN == 20 & OCCISCO == 3, 1, 0),
+         technicians_manufacturing   = ifelse(INDGEN == 30 & OCCISCO == 3, 1, 0),
+         technicians_utilities       = ifelse(INDGEN == 40 & OCCISCO == 3, 1, 0),
+         technicians_construction    = ifelse(INDGEN == 50 & OCCISCO == 3, 1, 0),
+         technicians_trade           = ifelse(INDGEN == 60 & OCCISCO == 3, 1, 0),
+         technicians_accommodation   = ifelse(INDGEN == 70 & OCCISCO == 3, 1, 0),
+         technicians_transport       = ifelse(INDGEN == 80 & OCCISCO == 3, 1, 0),
+         technicians_finance         = ifelse(INDGEN == 90 & OCCISCO == 3, 1, 0),
+         technicians_public         = ifelse(INDGEN == 100 & OCCISCO == 3, 1, 0),
+         technicians_unspec_services= ifelse(INDGEN == 110 & OCCISCO == 3, 1, 0),
+         technicians_business       = ifelse(INDGEN == 111 & OCCISCO == 3, 1, 0),
+         technicians_education      = ifelse(INDGEN == 112 & OCCISCO == 3, 1, 0),
+         technicians_health         = ifelse(INDGEN == 113 & OCCISCO == 3, 1, 0),
+         technicians_other_services = ifelse(INDGEN == 114 & OCCISCO == 3, 1, 0),
+         technicians_private_hh     = ifelse(INDGEN == 120 & OCCISCO == 3, 1, 0),
+         technicians_other_industry = ifelse(INDGEN == 130 & OCCISCO == 3, 1, 0),
+         clerks_agriculture     = ifelse(INDGEN == 10 & OCCISCO == 4, 1, 0),
+         clerks_mining          = ifelse(INDGEN == 20 & OCCISCO == 4, 1, 0),
+         clerks_manufacturing   = ifelse(INDGEN == 30 & OCCISCO == 4, 1, 0),
+         clerks_utilities       = ifelse(INDGEN == 40 & OCCISCO == 4, 1, 0),
+         clerks_construction    = ifelse(INDGEN == 50 & OCCISCO == 4, 1, 0),
+         clerks_trade           = ifelse(INDGEN == 60 & OCCISCO == 4, 1, 0),
+         clerks_accommodation   = ifelse(INDGEN == 70 & OCCISCO == 4, 1, 0),
+         clerks_transport       = ifelse(INDGEN == 80 & OCCISCO == 4, 1, 0),
+         clerks_finance         = ifelse(INDGEN == 90 & OCCISCO == 4, 1, 0),
+         clerks_public         = ifelse(INDGEN == 100 & OCCISCO == 4, 1, 0),
+         clerks_unspec_services= ifelse(INDGEN == 110 & OCCISCO == 4, 1, 0),
+         clerks_business       = ifelse(INDGEN == 111 & OCCISCO == 4, 1, 0),
+         clerks_education      = ifelse(INDGEN == 112 & OCCISCO == 4, 1, 0),
+         clerks_health         = ifelse(INDGEN == 113 & OCCISCO == 4, 1, 0),
+         clerks_other_services = ifelse(INDGEN == 114 & OCCISCO == 4, 1, 0),
+         clerks_private_hh     = ifelse(INDGEN == 120 & OCCISCO == 4, 1, 0),
+         clerks_other_industry = ifelse(INDGEN == 130 & OCCISCO == 4, 1, 0),
+         services_agriculture      = ifelse(INDGEN == 10 & OCCISCO == 5, 1, 0),
+         services_mining           = ifelse(INDGEN == 20 & OCCISCO == 5, 1, 0),
+         services_manufacturing    = ifelse(INDGEN == 30 & OCCISCO == 5, 1, 0),
+         services_utilities        = ifelse(INDGEN == 40 & OCCISCO == 5, 1, 0),
+         services_construction     = ifelse(INDGEN == 50 & OCCISCO == 5, 1, 0),
+         services_trade            = ifelse(INDGEN == 60 & OCCISCO == 5, 1, 0),
+         services_accommodation    = ifelse(INDGEN == 70 & OCCISCO == 5, 1, 0),
+         services_transport        = ifelse(INDGEN == 80 & OCCISCO == 5, 1, 0),
+         services_finance          = ifelse(INDGEN == 90 & OCCISCO == 5, 1, 0),
+         services_public          = ifelse(INDGEN == 100 & OCCISCO == 5, 1, 0),
+         services_unspec_services = ifelse(INDGEN == 110 & OCCISCO == 5, 1, 0),
+         services_business        = ifelse(INDGEN == 111 & OCCISCO == 5, 1, 0),
+         services_education       = ifelse(INDGEN == 112 & OCCISCO == 5, 1, 0),
+         services_health          = ifelse(INDGEN == 113 & OCCISCO == 5, 1, 0),
+         services_other_services  = ifelse(INDGEN == 114 & OCCISCO == 5, 1, 0),
+         services_private_hh      = ifelse(INDGEN == 120 & OCCISCO == 5, 1, 0),
+         services_other_industry  = ifelse(INDGEN == 130 & OCCISCO == 5, 1, 0),
+         agrifish_agriculture       = ifelse(INDGEN == 10 & OCCISCO == 6, 1, 0),
+         agrifish_mining            = ifelse(INDGEN == 20 & OCCISCO == 6, 1, 0),
+         agrifish_manufacturing     = ifelse(INDGEN == 30 & OCCISCO == 6, 1, 0),
+         agrifish_utilities         = ifelse(INDGEN == 40 & OCCISCO == 6, 1, 0),
+         agrifish_construction      = ifelse(INDGEN == 50 & OCCISCO == 6, 1, 0),
+         agrifish_trade             = ifelse(INDGEN == 60 & OCCISCO == 6, 1, 0),
+         agrifish_accommodation     = ifelse(INDGEN == 70 & OCCISCO == 6, 1, 0),
+         agrifish_transport         = ifelse(INDGEN == 80 & OCCISCO == 6, 1, 0),
+         agrifish_finance           = ifelse(INDGEN == 90 & OCCISCO == 6, 1, 0),
+         agrifish_public           = ifelse(INDGEN == 100 & OCCISCO == 6, 1, 0),
+         agrifish_unspec_services  = ifelse(INDGEN == 110 & OCCISCO == 6, 1, 0),
+         agrifish_business         = ifelse(INDGEN == 111 & OCCISCO == 6, 1, 0),
+         agrifish_education        = ifelse(INDGEN == 112 & OCCISCO == 6, 1, 0),
+         agrifish_health           = ifelse(INDGEN == 113 & OCCISCO == 6, 1, 0),
+         agrifish_other_services   = ifelse(INDGEN == 114 & OCCISCO == 6, 1, 0),
+         agrifish_private_hh       = ifelse(INDGEN == 120 & OCCISCO == 6, 1, 0),
+         agrifish_other_industry   = ifelse(INDGEN == 130 & OCCISCO == 6, 1, 0),
+         crafts_agriculture     = ifelse(INDGEN == 10 & OCCISCO == 7, 1, 0),
+         crafts_mining          = ifelse(INDGEN == 20 & OCCISCO == 7, 1, 0),
+         crafts_manufacturing   = ifelse(INDGEN == 30 & OCCISCO == 7, 1, 0),
+         crafts_utilities       = ifelse(INDGEN == 40 & OCCISCO == 7, 1, 0),
+         crafts_construction    = ifelse(INDGEN == 50 & OCCISCO == 7, 1, 0),
+         crafts_trade           = ifelse(INDGEN == 60 & OCCISCO == 7, 1, 0),
+         crafts_accommodation   = ifelse(INDGEN == 70 & OCCISCO == 7, 1, 0),
+         crafts_transport       = ifelse(INDGEN == 80 & OCCISCO == 7, 1, 0),
+         crafts_finance         = ifelse(INDGEN == 90 & OCCISCO == 7, 1, 0),
+         crafts_public         = ifelse(INDGEN == 100 & OCCISCO == 7, 1, 0),
+         crafts_unspec_services= ifelse(INDGEN == 110 & OCCISCO == 7, 1, 0),
+         crafts_business       = ifelse(INDGEN == 111 & OCCISCO == 7, 1, 0),
+         crafts_education      = ifelse(INDGEN == 112 & OCCISCO == 7, 1, 0),
+         crafts_health         = ifelse(INDGEN == 113 & OCCISCO == 7, 1, 0),
+         crafts_other_services = ifelse(INDGEN == 114 & OCCISCO == 7, 1, 0),
+         crafts_private_hh     = ifelse(INDGEN == 120 & OCCISCO == 7, 1, 0),
+         crafts_other_industry = ifelse(INDGEN == 130 & OCCISCO == 7, 1, 0),
+         plant_agriculture     = ifelse(INDGEN == 10 & OCCISCO == 8, 1, 0),
+         plant_mining          = ifelse(INDGEN == 20 & OCCISCO == 8, 1, 0),
+         plant_manufacturing   = ifelse(INDGEN == 30 & OCCISCO == 8, 1, 0),
+         plant_utilities       = ifelse(INDGEN == 40 & OCCISCO == 8, 1, 0),
+         plant_construction    = ifelse(INDGEN == 50 & OCCISCO == 8, 1, 0),
+         plant_trade           = ifelse(INDGEN == 60 & OCCISCO == 8, 1, 0),
+         plant_accommodation   = ifelse(INDGEN == 70 & OCCISCO == 8, 1, 0),
+         plant_transport       = ifelse(INDGEN == 80 & OCCISCO == 8, 1, 0),
+         plant_finance         = ifelse(INDGEN == 90 & OCCISCO == 8, 1, 0),
+         plant_public         = ifelse(INDGEN == 100 & OCCISCO == 8, 1, 0),
+         plant_unspec_services= ifelse(INDGEN == 110 & OCCISCO == 8, 1, 0),
+         plant_business       = ifelse(INDGEN == 111 & OCCISCO == 8, 1, 0),
+         plant_education      = ifelse(INDGEN == 112 & OCCISCO == 8, 1, 0),
+         plant_health         = ifelse(INDGEN == 113 & OCCISCO == 8, 1, 0),
+         plant_other_services = ifelse(INDGEN == 114 & OCCISCO == 8, 1, 0),
+         plant_private_hh     = ifelse(INDGEN == 120 & OCCISCO == 8, 1, 0),
+         plant_other_industry = ifelse(INDGEN == 130 & OCCISCO == 8, 1, 0),
+         elementary_agriculture      = ifelse(INDGEN == 10 & OCCISCO == 9, 1, 0),
+         elementary_mining           = ifelse(INDGEN == 20 & OCCISCO == 9, 1, 0),
+         elementary_manufacturing    = ifelse(INDGEN == 30 & OCCISCO == 9, 1, 0),
+         elementary_utilities        = ifelse(INDGEN == 40 & OCCISCO == 9, 1, 0),
+         elementary_construction     = ifelse(INDGEN == 50 & OCCISCO == 9, 1, 0),
+         elementary_trade            = ifelse(INDGEN == 60 & OCCISCO == 9, 1, 0),
+         elementary_accommodation    = ifelse(INDGEN == 70 & OCCISCO == 9, 1, 0),
+         elementary_transport        = ifelse(INDGEN == 80 & OCCISCO == 9, 1, 0),
+         elementary_finance          = ifelse(INDGEN == 90 & OCCISCO == 9, 1, 0),
+         elementary_public          = ifelse(INDGEN == 100 & OCCISCO == 9, 1, 0),
+         elementary_unspec_services = ifelse(INDGEN == 110 & OCCISCO == 9, 1, 0),
+         elementary_business        = ifelse(INDGEN == 111 & OCCISCO == 9, 1, 0),
+         elementary_education       = ifelse(INDGEN == 112 & OCCISCO == 9, 1, 0),
+         elementary_health          = ifelse(INDGEN == 113 & OCCISCO == 9, 1, 0),
+         elementary_other_services  = ifelse(INDGEN == 114 & OCCISCO == 9, 1, 0),
+         elementary_private_hh      = ifelse(INDGEN == 120 & OCCISCO == 9, 1, 0),
+         elementary_other_industry  = ifelse(INDGEN == 130 & OCCISCO == 9, 1, 0),
+         army_agriculture       = ifelse(INDGEN == 10 & OCCISCO == 10, 1, 0),
+         army_mining            = ifelse(INDGEN == 20 & OCCISCO == 10, 1, 0),
+         army_manufacturing     = ifelse(INDGEN == 30 & OCCISCO == 10, 1, 0),
+         army_utilities         = ifelse(INDGEN == 40 & OCCISCO == 10, 1, 0),
+         army_construction      = ifelse(INDGEN == 50 & OCCISCO == 10, 1, 0),
+         army_trade             = ifelse(INDGEN == 60 & OCCISCO == 10, 1, 0),
+         army_accommodation     = ifelse(INDGEN == 70 & OCCISCO == 10, 1, 0),
+         army_transport         = ifelse(INDGEN == 80 & OCCISCO == 10, 1, 0),
+         army_finance           = ifelse(INDGEN == 90 & OCCISCO == 10, 1, 0),
+         army_public           = ifelse(INDGEN == 100 & OCCISCO == 10, 1, 0),
+         army_unspec_services  = ifelse(INDGEN == 110 & OCCISCO == 10, 1, 0),
+         army_business         = ifelse(INDGEN == 111 & OCCISCO == 10, 1, 0),
+         army_education        = ifelse(INDGEN == 112 & OCCISCO == 10, 1, 0),
+         army_health           = ifelse(INDGEN == 113 & OCCISCO == 10, 1, 0),
+         army_other_services   = ifelse(INDGEN == 114 & OCCISCO == 10, 1, 0),
+         army_private_hh       = ifelse(INDGEN == 120 & OCCISCO == 10, 1, 0),
+         army_other_industry   = ifelse(INDGEN == 130 & OCCISCO == 10, 1, 0),
+         other_agriculture     = ifelse(INDGEN == 10 & OCCISCO == 11, 1, 0),
+         other_mining          = ifelse(INDGEN == 20 & OCCISCO == 11, 1, 0),
+         other_manufacturing   = ifelse(INDGEN == 30 & OCCISCO == 11, 1, 0),
+         other_utilities       = ifelse(INDGEN == 40 & OCCISCO == 11, 1, 0),
+         other_construction    = ifelse(INDGEN == 50 & OCCISCO == 11, 1, 0),
+         other_trade           = ifelse(INDGEN == 60 & OCCISCO == 11, 1, 0),
+         other_accommodation   = ifelse(INDGEN == 70 & OCCISCO == 11, 1, 0),
+         other_transport       = ifelse(INDGEN == 80 & OCCISCO == 11, 1, 0),
+         other_finance         = ifelse(INDGEN == 90 & OCCISCO == 11, 1, 0),
+         other_public         = ifelse(INDGEN == 100 & OCCISCO == 11, 1, 0),
+         other_unspec_services= ifelse(INDGEN == 110 & OCCISCO == 11, 1, 0),
+         other_business       = ifelse(INDGEN == 111 & OCCISCO == 11, 1, 0),
+         other_education      = ifelse(INDGEN == 112 & OCCISCO == 11, 1, 0),
+         other_health         = ifelse(INDGEN == 113 & OCCISCO == 11, 1, 0),
+         other_other_services = ifelse(INDGEN == 114 & OCCISCO == 11, 1, 0),
+         other_private_hh     = ifelse(INDGEN == 120 & OCCISCO == 11, 1, 0),
+         other_other_industry = ifelse(INDGEN == 130 & OCCISCO == 11, 1, 0))
+
+
+
+# summarise for each district 
+
+benin_occisco_indgen_2013 <- benin_occisco_indgen %>%
+  filter(YEAR == 2013) %>%
+  group_by(GEOLEV2) %>%
+  summarise(legislators_agriculture =weighted.mean(legislators_agriculture, PERWT),
+            legislators_mining =weighted.mean(legislators_mining, PERWT),
+            legislators_manufacturing =weighted.mean(legislators_manufacturing, PERWT),
+            legislators_utilities =weighted.mean(legislators_utilities, PERWT),
+            legislators_construction =weighted.mean(legislators_construction, PERWT),
+            legislators_trade =weighted.mean(legislators_trade, PERWT),
+            legislators_accommodation =weighted.mean(legislators_accommodation, PERWT),
+            legislators_transport =weighted.mean(legislators_transport, PERWT),
+            legislators_finance =weighted.mean(legislators_finance, PERWT),
+            legislators_public = weighted.mean(legislators_public, PERWT),
+            legislators_unspec_services = weighted.mean(legislators_unspec_services, PERWT),
+            legislators_business = weighted.mean(legislators_business, PERWT),
+            legislators_education = weighted.mean(legislators_education, PERWT),
+            legislators_health = weighted.mean(legislators_health, PERWT),
+            legislators_other_services = weighted.mean(legislators_other_services, PERWT),
+            legislators_private_hh = weighted.mean(legislators_private_hh, PERWT),
+            legislators_other_industry = weighted.mean(legislators_other_industry, PERWT),
+            professionals_agriculture =weighted.mean(professionals_agriculture, PERWT),
+            professionals_mining =weighted.mean(professionals_mining, PERWT),
+            professionals_manufacturing =weighted.mean(professionals_manufacturing, PERWT),
+            professionals_utilities =weighted.mean(professionals_utilities, PERWT),
+            professionals_construction =weighted.mean(professionals_construction, PERWT),
+            professionals_trade =weighted.mean(professionals_trade, PERWT),
+            professionals_accommodation =weighted.mean(professionals_accommodation, PERWT),
+            professionals_transport =weighted.mean(professionals_transport, PERWT),
+            professionals_finance =weighted.mean(professionals_finance, PERWT),
+            professionals_public = weighted.mean(professionals_public, PERWT),
+            professionals_unspec_services = weighted.mean(professionals_unspec_services, PERWT),
+            professionals_business = weighted.mean(professionals_business, PERWT),
+            professionals_education = weighted.mean(professionals_education, PERWT),
+            professionals_health = weighted.mean(professionals_health, PERWT),
+            professionals_other_services = weighted.mean(professionals_other_services, PERWT),
+            professionals_private_hh = weighted.mean(professionals_private_hh, PERWT),
+            professionals_other_industry = weighted.mean(professionals_other_industry, PERWT),
+            technicians_agriculture =weighted.mean(technicians_agriculture, PERWT),
+            technicians_mining =weighted.mean(technicians_mining, PERWT),
+            technicians_manufacturing =weighted.mean(technicians_manufacturing, PERWT),
+            technicians_utilities =weighted.mean(technicians_utilities, PERWT),
+            technicians_construction =weighted.mean(technicians_construction, PERWT),
+            technicians_trade =weighted.mean(technicians_trade, PERWT),
+            technicians_accommodation =weighted.mean(technicians_accommodation, PERWT),
+            technicians_transport =weighted.mean(technicians_transport, PERWT),
+            technicians_finance =weighted.mean(technicians_finance, PERWT),
+            technicians_public = weighted.mean(technicians_public, PERWT),
+            technicians_unspec_services = weighted.mean(technicians_unspec_services, PERWT),
+            technicians_business = weighted.mean(technicians_business, PERWT),
+            technicians_education = weighted.mean(technicians_education, PERWT),
+            technicians_health = weighted.mean(technicians_health, PERWT),
+            technicians_other_services = weighted.mean(technicians_other_services, PERWT),
+            technicians_private_hh = weighted.mean(technicians_private_hh, PERWT),
+            technicians_other_industry = weighted.mean(technicians_other_industry, PERWT),
+            clerks_agriculture =weighted.mean(clerks_agriculture, PERWT),
+            clerks_mining =weighted.mean(clerks_mining, PERWT),
+            clerks_manufacturing =weighted.mean(clerks_manufacturing, PERWT),
+            clerks_utilities =weighted.mean(clerks_utilities, PERWT),
+            clerks_construction =weighted.mean(clerks_construction, PERWT),
+            clerks_trade =weighted.mean(clerks_trade, PERWT),
+            clerks_accommodation =weighted.mean(clerks_accommodation, PERWT),
+            clerks_transport =weighted.mean(clerks_transport, PERWT),
+            clerks_finance =weighted.mean(clerks_finance, PERWT),
+            clerks_public = weighted.mean(clerks_public, PERWT),
+            clerks_unspec_services = weighted.mean(clerks_unspec_services, PERWT),
+            clerks_business = weighted.mean(clerks_business, PERWT),
+            clerks_education = weighted.mean(clerks_education, PERWT),
+            clerks_health = weighted.mean(clerks_health, PERWT),
+            clerks_other_services = weighted.mean(clerks_other_services, PERWT),
+            clerks_private_hh = weighted.mean(clerks_private_hh, PERWT),
+            clerks_other_industry = weighted.mean(clerks_other_industry, PERWT),
+            services_agriculture =weighted.mean(services_agriculture, PERWT),
+            services_mining =weighted.mean(services_mining, PERWT),
+            services_manufacturing =weighted.mean(services_manufacturing, PERWT),
+            services_utilities =weighted.mean(services_utilities, PERWT),
+            services_construction =weighted.mean(services_construction, PERWT),
+            services_trade =weighted.mean(services_trade, PERWT),
+            services_accommodation =weighted.mean(services_accommodation, PERWT),
+            services_transport =weighted.mean(services_transport, PERWT),
+            services_finance =weighted.mean(services_finance, PERWT),
+            services_public = weighted.mean(services_public, PERWT),
+            services_unspec_services = weighted.mean(services_unspec_services, PERWT),
+            services_business = weighted.mean(services_business, PERWT),
+            services_education = weighted.mean(services_education, PERWT),
+            services_health = weighted.mean(services_health, PERWT),
+            services_other_services = weighted.mean(services_other_services, PERWT),
+            services_private_hh = weighted.mean(services_private_hh, PERWT),
+            services_other_industry = weighted.mean(services_other_industry, PERWT),
+            agrifish_agriculture =weighted.mean(agrifish_agriculture, PERWT),
+            agrifish_mining =weighted.mean(agrifish_mining, PERWT),
+            agrifish_manufacturing =weighted.mean(agrifish_manufacturing, PERWT),
+            agrifish_utilities =weighted.mean(agrifish_utilities, PERWT),
+            agrifish_construction =weighted.mean(agrifish_construction, PERWT),
+            agrifish_trade =weighted.mean(agrifish_trade, PERWT),
+            agrifish_accommodation =weighted.mean(agrifish_accommodation, PERWT),
+            agrifish_transport =weighted.mean(agrifish_transport, PERWT),
+            agrifish_finance =weighted.mean(agrifish_finance, PERWT),
+            agrifish_public = weighted.mean(agrifish_public, PERWT),
+            agrifish_unspec_services = weighted.mean(agrifish_unspec_services, PERWT),
+            agrifish_business = weighted.mean(agrifish_business, PERWT),
+            agrifish_education = weighted.mean(agrifish_education, PERWT),
+            agrifish_health = weighted.mean(agrifish_health, PERWT),
+            agrifish_other_services = weighted.mean(agrifish_other_services, PERWT),
+            agrifish_private_hh = weighted.mean(agrifish_private_hh, PERWT),
+            agrifish_other_industry = weighted.mean(agrifish_other_industry, PERWT),
+            crafts_agriculture =weighted.mean(crafts_agriculture, PERWT),
+            crafts_mining =weighted.mean(crafts_mining, PERWT),
+            crafts_manufacturing =weighted.mean(crafts_manufacturing, PERWT),
+            crafts_utilities =weighted.mean(crafts_utilities, PERWT),
+            crafts_construction =weighted.mean(crafts_construction, PERWT),
+            crafts_trade =weighted.mean(crafts_trade, PERWT),
+            crafts_accommodation =weighted.mean(crafts_accommodation, PERWT),
+            crafts_transport =weighted.mean(crafts_transport, PERWT),
+            crafts_finance =weighted.mean(crafts_finance, PERWT),
+            crafts_public = weighted.mean(crafts_public, PERWT),
+            crafts_unspec_services = weighted.mean(crafts_unspec_services, PERWT),
+            crafts_business = weighted.mean(crafts_business, PERWT),
+            crafts_education = weighted.mean(crafts_education, PERWT),
+            crafts_health = weighted.mean(crafts_health, PERWT),
+            crafts_other_services = weighted.mean(crafts_other_services, PERWT),
+            crafts_private_hh = weighted.mean(crafts_private_hh, PERWT),
+            crafts_other_industry = weighted.mean(crafts_other_industry, PERWT),
+            plant_agriculture =weighted.mean(plant_agriculture, PERWT),
+            plant_mining =weighted.mean(plant_mining, PERWT),
+            plant_manufacturing =weighted.mean(plant_manufacturing, PERWT),
+            plant_utilities =weighted.mean(plant_utilities, PERWT),
+            plant_construction =weighted.mean(plant_construction, PERWT),
+            plant_trade =weighted.mean(plant_trade, PERWT),
+            plant_accommodation =weighted.mean(plant_accommodation, PERWT),
+            plant_transport =weighted.mean(plant_transport, PERWT),
+            plant_finance =weighted.mean(plant_finance, PERWT),
+            plant_public = weighted.mean(plant_public, PERWT),
+            plant_unspec_services = weighted.mean(plant_unspec_services, PERWT),
+            plant_business = weighted.mean(plant_business, PERWT),
+            plant_education = weighted.mean(plant_education, PERWT),
+            plant_health = weighted.mean(plant_health, PERWT),
+            plant_other_services = weighted.mean(plant_other_services, PERWT),
+            plant_private_hh = weighted.mean(plant_private_hh, PERWT),
+            plant_other_industry = weighted.mean(plant_other_industry, PERWT),
+            elementary_agriculture =weighted.mean(elementary_agriculture, PERWT),
+            elementary_mining =weighted.mean(elementary_mining, PERWT),
+            elementary_manufacturing =weighted.mean(elementary_manufacturing, PERWT),
+            elementary_utilities =weighted.mean(elementary_utilities, PERWT),
+            elementary_construction =weighted.mean(elementary_construction, PERWT),
+            elementary_trade =weighted.mean(elementary_trade, PERWT),
+            elementary_accommodation =weighted.mean(elementary_accommodation, PERWT),
+            elementary_transport =weighted.mean(elementary_transport, PERWT),
+            elementary_finance =weighted.mean(elementary_finance, PERWT),
+            elementary_public = weighted.mean(elementary_public, PERWT),
+            elementary_unspec_services = weighted.mean(elementary_unspec_services, PERWT),
+            elementary_business = weighted.mean(elementary_business, PERWT),
+            elementary_education = weighted.mean(elementary_education, PERWT),
+            elementary_health = weighted.mean(elementary_health, PERWT),
+            elementary_other_services = weighted.mean(elementary_other_services, PERWT),
+            elementary_private_hh = weighted.mean(elementary_private_hh, PERWT),
+            elementary_other_industry = weighted.mean(elementary_other_industry, PERWT),
+            army_agriculture =weighted.mean(army_agriculture, PERWT),
+            army_mining =weighted.mean(army_mining, PERWT),
+            army_manufacturing =weighted.mean(army_manufacturing, PERWT),
+            army_utilities =weighted.mean(army_utilities, PERWT),
+            army_construction =weighted.mean(army_construction, PERWT),
+            army_trade =weighted.mean(army_trade, PERWT),
+            army_accommodation =weighted.mean(army_accommodation, PERWT),
+            army_transport =weighted.mean(army_transport, PERWT),
+            army_finance =weighted.mean(army_finance, PERWT),
+            army_public = weighted.mean(army_public, PERWT),
+            army_unspec_services = weighted.mean(army_unspec_services, PERWT),
+            army_business = weighted.mean(army_business, PERWT),
+            army_education = weighted.mean(army_education, PERWT),
+            army_health = weighted.mean(army_health, PERWT),
+            army_other_services = weighted.mean(army_other_services, PERWT),
+            army_private_hh = weighted.mean(army_private_hh, PERWT),
+            army_other_industry = weighted.mean(army_other_industry, PERWT),
+            other_agriculture =weighted.mean(other_agriculture, PERWT),
+            other_mining =weighted.mean(other_mining, PERWT),
+            other_manufacturing =weighted.mean(other_manufacturing, PERWT),
+            other_utilities =weighted.mean(other_utilities, PERWT),
+            other_construction =weighted.mean(other_construction, PERWT),
+            other_trade =weighted.mean(other_trade, PERWT),
+            other_accommodation =weighted.mean(other_accommodation, PERWT),
+            other_transport =weighted.mean(other_transport, PERWT),
+            other_finance =weighted.mean(other_finance, PERWT),
+            other_public = weighted.mean(other_public, PERWT),
+            other_unspec_services = weighted.mean(other_unspec_services, PERWT),
+            other_business = weighted.mean(other_business, PERWT),
+            other_education = weighted.mean(other_education, PERWT),
+            other_health = weighted.mean(other_health, PERWT),
+            other_other_services = weighted.mean(other_other_services, PERWT),
+            other_private_hh = weighted.mean(other_private_hh, PERWT),
+            other_other_industry = weighted.mean(other_other_industry, PERWT))
+
+# Merge with calculated shares
+
+benin.occisco.indgen.2013.spatial <- merge(benin.map, benin_occisco_indgen_2013, by = "GEOLEV2")
+rm(benin_occisco_indgen, benin_occisco_indgen_2013)
+
+```
+
+#### Merging all together
+
+Here, I merge all spatially explicit datasets together using their geography as the `ID` variable, in order to obtain a dataset with administrative units as observational units and the calculated shares as variables. Datasets constructed this way will have a large horizontal dimension, with each column corresponding to a variable.
+
+```{r, message = F}
+
+benin.spatial.2013 <- merge(benin.pop.2013.spatial, sf::st_drop_geometry(benin.ru.2013.spatial), by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.re.2013.spatial), by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.nchild.2013.spatial),  by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.nchlt5.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.age.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.sex.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.marst.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.chborn.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.chsurv.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.births.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.birthsurv.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.mortmot.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.religion.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.ethnic.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.lang.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.school.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.lit.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.edattain.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.yrschool.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.empstat.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.labforce.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.occisco.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.sectors.2013.spatial), by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.indgen.2013.spatial), by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.migratep.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.gender.empstat.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.gender.occisco.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.gender.indgen.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.age.empstat.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.age.occisco.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.age.indgen.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.migrant.empstat.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.migrant.occisco.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.migrant.indgen.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.edu.indgen.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+benin.spatial.2013 <- merge(benin.spatial.2013, sf::st_drop_geometry(benin.occisco.indgen.2013.spatial),by = c("CNTRY_NAME", "ADMIN_NAME", "GEOLEV2"))
+```
+
+#### Night Lights Aggregation
+
+Once the various spatial datasets have been merged together, raster datasets can be aggregated to the whole matrix. Here, I do not need to dummify categories nor to collapse data from the individual level to the geographic level of choice. It suffices to extract the raster values to the desired administrative units by choosing the needed mathematical operator. I compute both the mean level and the Sum of Lights for each district.
+
+```{r, message = F, results=F}
+
+NTL2013 <- raster::raster("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/NTL/F182013.v4/F182013.v4c_web.stable_lights.avg_vis.tif")
+
+benin.spatial.2013 <- benin.spatial.2013 %>%
+  mutate(ntl_mean=exactextractr::exact_extract(NTL2013, benin.spatial.2013, "mean"),
+         ntl_sum=exactextractr::exact_extract(NTL2013, benin.spatial.2013, "sum"))
+
+```
+
+I plot the SoL for Benin in 2013, highlighting how the capital city and in general the southernmost (comparatively service-rich) regions are at the right tail of the nightlights distribution. This fact seems to confirm the correlation between developed economic activity and nightlights.
+
+```{r}
+ggplot() +
+  geom_sf(data = benin.spatial.2013$geometry) +
+  geom_sf(data = benin.spatial.2013, aes(fill=ntl_sum)) +
+  scale_fill_viridis_c(option = "viridis")  + theme_void()
+
+```

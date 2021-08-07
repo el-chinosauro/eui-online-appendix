@@ -1,0 +1,2111 @@
+---
+title: "Aggregate Occupational Dynamics"
+author:
+  - Lorenzo Sileci^[All code and this website are developed and maintained by Lorenzo Sileci (LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; l.sileci@lse.ac.uk)]
+
+date: "04/06/2021"
+output: 
+  html_document
+summary: "Scatterplots showing aggregate occupational dynamics across the last two available waves in the IPUMS dataset."
+showDate: false
+gallery:
+    - http://i.imgur.com/sCWV5l1.png
+    
+autoThumbnailImage: yes
+thumbnailImagePosition: left
+---
+
+***
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+### Aggregate Occupational Dynamics 
+
+Here we provide a series of scatterplots which describe the dynamics of surveyed individuals' occupational allocation in the last two available waves of the IPUMS dataset. We first examine the whole dataset and then refine the exercise by looking at individual countries
+
+\vspace{0.5cm}
+
+<details><summary>ENTIRE DATASET<summary>
+
+As we can see in the scatterplot below, the general occupational dynamics for the African countries included in the dataset underpin a movement from the goods to the services category over the years.
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) 
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary> Benin </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Benin")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+</details>
+
+<details>
+<summary> Botswana </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Botswana")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+
+</details>
+
+<details>
+<summary> Egypt </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Egypt")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+</details>
+
+<details>
+<summary> Ghana </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Ghana")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+</details>
+
+<details>
+<summary> Malawi </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Malawi")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+</details>
+
+<details>
+<summary> Mali </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Mali")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+</details>
+
+<details>
+<summary> Mauritius </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Mauritius")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+</details>
+
+<details>
+<summary> Morocco </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Morocco")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+</details>
+
+<details>
+<summary> Mozambique </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Mozambique")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+</details>
+
+<details>
+<summary> Rwanda </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Rwanda")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+
+
+</details>
+
+<details>
+<summary> South Africa </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "South Africa")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+</details>
+
+<details>
+<summary> Tanzania </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Tanzania")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+
+</details>
+
+<details>
+<summary> Zambia </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+services_occ = c("legislators_agriculture",         
+"legislators_mining"               ,"legislators_manufacturing"       ,
+"legislators_utilities"            ,"legislators_construction"        ,
+"legislators_trade"                ,"legislators_accommodation"       ,
+"legislators_transport"            ,"legislators_finance"             ,
+"legislators_public"               ,"legislators_unspec_services"     ,
+"legislators_business"             ,"legislators_education"           ,
+"legislators_health"               ,"legislators_other_services"      ,
+"legislators_private_hh"           ,"legislators_other_industry"      ,
+"professionals_agriculture"        ,"professionals_mining"            ,
+"professionals_manufacturing"      ,"professionals_utilities"         ,
+"professionals_construction"       ,"professionals_trade"             ,
+"professionals_accommodation"      ,"professionals_transport"         ,
+"professionals_finance"            ,"professionals_public"            ,
+"professionals_unspec_services"    ,"professionals_business"          ,
+"professionals_education"          ,"professionals_health"            ,
+"professionals_other_services"     ,"professionals_private_hh"        ,
+"professionals_other_industry"     ,"technicians_agriculture"         ,
+"technicians_mining"               ,"technicians_manufacturing"       ,
+"technicians_utilities"            ,"technicians_construction"        ,
+"technicians_trade"                ,"technicians_accommodation"       ,
+"technicians_transport"            ,"technicians_finance"             ,
+"technicians_public"               ,"technicians_unspec_services"     ,
+"technicians_business"             ,"technicians_education"           ,
+"technicians_health"               ,"technicians_other_services"      ,
+"technicians_private_hh"           ,"technicians_other_industry"      ,
+"clerks_agriculture"               ,"clerks_mining"                   ,
+"clerks_manufacturing"             ,"clerks_utilities"                ,
+"clerks_construction"              ,"clerks_trade"                    ,
+"clerks_accommodation"             ,"clerks_transport"                ,
+"clerks_finance"                   ,"clerks_public"                   ,
+"clerks_unspec_services"           ,"clerks_business"                 ,
+"clerks_education"                 ,"clerks_health"                   ,
+"clerks_other_services"            ,"clerks_private_hh"               ,
+"clerks_other_industry"            ,"services_agriculture"            ,
+"services_mining"                  ,"services_manufacturing"          ,
+"services_utilities"               ,"services_construction"           ,
+"services_trade"                   ,"services_accommodation"          ,
+"services_transport"               ,"services_finance"                ,
+"services_public"                  ,"services_unspec_services"        ,
+"services_business"                ,"services_education"              ,
+"services_health"                  ,"services_other_services"         ,
+"services_private_hh"              ,"services_other_industry"         ,
+"elementary_trade"                 ,"elementary_accommodation"        ,
+"elementary_transport"             ,"elementary_finance"              ,
+"elementary_public"                ,"elementary_unspec_services"      ,
+"elementary_business"              ,"elementary_education"            ,
+"elementary_health"                ,"elementary_other_services"       ,
+"elementary_private_hh"            ,"elementary_other_industry"       ,
+"army_agriculture"                 ,"army_mining"                     ,
+"army_manufacturing"               ,"army_utilities"                  ,
+"army_construction"                ,"army_trade"                      ,
+"army_accommodation"               ,"army_transport"                  ,
+"army_finance"                     ,"army_public"                     ,
+"army_unspec_services"             ,"army_business"                   ,
+"army_education"                   ,"army_health"                     ,
+"army_other_services"              ,"army_private_hh"                 ,
+"army_other_industry"              ,"other_agriculture"               ,
+"other_mining"                     ,"other_manufacturing"             ,
+"other_utilities"                  ,"other_construction"              ,
+"other_trade"                      ,"other_accommodation"             ,
+"other_transport"                  ,"other_finance"                   ,
+"other_public"                     ,"other_unspec_services"           ,
+"other_business"                   ,"other_education"                 ,
+"other_health"                     ,"other_other_services"            ,
+"other_private_hh"                 ,"other_other_industry") 
+
+
+
+
+goods_occ = c("elementary_agriculture",          
+"elementary_mining"                ,"elementary_manufacturing"        ,
+"elementary_utilities"             ,"elementary_construction"   ,
+"agrifish_agriculture"             ,"agrifish_mining"                 ,
+"agrifish_manufacturing"           ,"agrifish_utilities"              ,
+"agrifish_construction"            ,"agrifish_trade"                  ,
+"agrifish_accommodation"           ,"agrifish_transport"              ,
+"agrifish_finance"                 ,"agrifish_public"                 ,
+"agrifish_unspec_services"         ,"agrifish_business"               ,
+"agrifish_education"               ,"agrifish_health"                 ,
+"agrifish_other_services"          ,"agrifish_private_hh"             ,
+"agrifish_other_industry"          ,"crafts_agriculture"              ,
+"crafts_mining"                    ,"crafts_manufacturing"            ,
+"crafts_utilities"                 ,"crafts_construction"             ,
+"crafts_trade"                     ,"crafts_accommodation"            ,
+"crafts_transport"                 ,"crafts_finance"                  ,
+"crafts_public"                    ,"crafts_unspec_services"          ,
+"crafts_business"                  ,"crafts_education"                ,
+"crafts_health"                    ,"crafts_other_services"           ,
+"crafts_private_hh"                ,"crafts_other_industry"  ,
+"plant_agriculture"                ,"plant_mining"                    ,
+"plant_manufacturing"              ,"plant_utilities"                 ,
+"plant_construction"               ,"plant_trade"                     ,
+"plant_accommodation"              ,"plant_transport"                 ,
+"plant_finance"                    ,"plant_public"                    ,
+"plant_unspec_services"            ,"plant_business"                  ,
+"plant_education"                  ,"plant_health"                    ,
+"plant_other_services"             ,"plant_private_hh"                ,
+"plant_other_industry")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry()
+
+total$goods_occup = rowSums(total[, goods_occ])
+total$services_occup = rowSums(total[, services_occ])
+
+# Select relevant variables
+var_list = c("goods_occup", "services_occup") 
+
+collapsed_data2 <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,district,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data2 = collapsed_data2 %>%
+  pivot_longer(cols = ends_with("_occup"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  filter(country == "Zambia")
+  
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+ggplot(reshaped_data2, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.6) +
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  theme_Publication() +
+  scale_colour_discrete(name = "Category", labels = c("Goods", "Services")) +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+
+```
+</details>
+

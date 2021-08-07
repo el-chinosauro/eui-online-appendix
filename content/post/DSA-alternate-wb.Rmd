@@ -1,0 +1,969 @@
+---
+title: "Disaggregated Sectoral Dynamics"
+author:
+  - Lorenzo Sileci^[LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; l.sileci@lse.ac.uk]
+
+date: "22/06/2021"
+output: 
+  html_document
+summary: "Scatterplots showing disaggregated sectoral dynamics across the last two available waves in the IPUMS dataset."
+showDate: false
+gallery:
+    - http://i.imgur.com/IPm5FCd.png
+    
+autoThumbnailImage: yes
+thumbnailImagePosition: left
+---
+
+***
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+### Disaggregated Sectoral Dynamics 
+
+Here we provide a series of faceted scatterplots which describe the dynamics of surveyed individuals' sectoral allocation in the last two available waves of the IPUMS dataset. We first examine the whole dataset and then refine the exercise by looking at individual countries. Here, each sector is reported in a different facet.
+
+\vspace{0.5cm}
+
+<details><summary>ENTIRE DATASET</summary>
+
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  )
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Benin </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Benin")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Botswana </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Botswana")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Egypt </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Egypt")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Ghana </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Ghana")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Malawi </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Malawi")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Mali </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Mali")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Mauritius </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Mauritius")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Morocco </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Morocco")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary> Mozambique </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Mozambique")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary> Rwanda </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Rwanda")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+
+</details>
+
+<details>
+<summary> South Africa </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "South Africa")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Tanzania </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Tanzania")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+
+<details>
+<summary> Zambia </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+source('~/Dropbox/PHD/publication_themes_ggplot/ggplot-custom.R')
+
+options(scipen=999)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/fullpanel.RData")
+
+
+total = full_panel_updated %>%
+  sf::st_drop_geometry() 
+
+# Select relevant variables
+var_list = c(colnames(total)[grepl("sector_?", colnames(total))]) 
+var_list = var_list[5:20]
+
+collapsed_data <- total %>%
+  filter(!wave == "first") %>%
+  group_by(country,admin,wave) %>%
+  summarise_at(var_list, list(~ mean(., na.rm = T))) %>%
+  ungroup()
+
+reshaped_data = collapsed_data %>%
+  pivot_longer(cols = starts_with("sector_"),
+               names_to = "sector",
+               values_to = "share") %>%
+  pivot_wider(names_from = wave, values_from = share) %>%
+  mutate(label = case_when(
+
+    sector == "sector_mining"         ~ "Mining"                 ,
+    sector == "sector_manufacturing"  ~ "Manufacturing"          ,
+    sector == "sector_utilities"      ~ "Utilities"              ,
+    sector == "sector_construction"   ~ "Construction"           ,
+    sector == "sector_trade"          ~ "Trade"                  ,
+    sector == "sector_accommodation"  ~ "Accommodation"          ,
+    sector == "sector_transport"      ~ "Transport"              ,
+    sector == "sector_finance"        ~ "Finance"                ,
+    sector == "sector_public"         ~ "Public"                 ,
+    sector == "sector_unspec_services"~ "Unspecified Services"   ,
+    sector == "sector_business"       ~ "Business"               ,
+    sector == "sector_education"      ~ "Education"              ,
+    sector == "sector_health"         ~ "Health"                 ,
+    sector == "sector_other_services" ~ "Other Services"         ,
+    sector == "sector_private_hh"     ~ "Private HH"             ,
+    sector == "sector_other_industry" ~ "Other Industry, n.e.c." 
+    )
+  ) %>%
+  filter(country == "Zambia")
+
+# Add this line for individual country graphs
+# %>% filter(country == "Benin")
+
+
+ggplot(reshaped_data, aes(x = secondtolast , y = last, colour = sector)) + geom_point(alpha = 0.4, show.legend = F) + 
+  geom_abline(intercept = 0, colour = "black", linetype = "dashed") +
+  facet_wrap(~ label) +
+  theme_Publication() +
+  # scale_colour_discrete(name = "Sector") +
+  labs(x = "Share, First Wave", y = "Share, Last Wave")
+```
+
+</details>
+

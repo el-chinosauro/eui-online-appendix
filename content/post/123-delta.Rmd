@@ -1,0 +1,1144 @@
+---
+title: "Sectoral Dynamics Maps"
+author:
+  - Lorenzo Sileci^[All code and this website are developed and maintained by Lorenzo Sileci (LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; l.sileci@lse.ac.uk)]
+
+date: "09/07/2021"
+output: 
+  html_document
+summary: "Series of maps showing the dynamics of aggregate sectors across countries included in the dataset. Maps show admin-level sectoral shares for the last two available waves and the differential between waves."
+showDate: false
+gallery:
+    - http://i.imgur.com/VEjofCs.png
+    
+autoThumbnailImage: yes
+thumbnailImagePosition: left
+---
+
+***
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+### Aggregate Sectoral Dynamics Maps
+
+<!-- #### Entire Dataset -->
+
+<!-- ```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10} -->
+<!-- library(tidyverse) -->
+<!-- library(sf) -->
+
+<!-- load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData") -->
+
+<!-- sector_map = panel_alesina %>% -->
+<!--   filter(wave == "secondtolast" | wave == "last") %>% -->
+<!--   dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry")))  -->
+
+<!-- sector_map_delta = sector_map %>% -->
+<!--   sf::st_drop_geometry() %>% -->
+<!--   dplyr::select(-wave) %>% -->
+<!--   pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>% -->
+<!--   mutate(sector_primary_delta = sector_primary_3 - sector_primary_2, -->
+<!--          sector_secondary_delta = sector_secondary_3 - sector_secondary_2, -->
+<!--          sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>% -->
+<!--   mutate(wave = "delta") %>% -->
+<!--   dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta"))) -->
+
+<!-- geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry"))) -->
+<!-- sector_map_delta = merge(geometries, sector_map_delta, by = "district") -->
+
+<!-- entire_1 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",], aes(fill=sector_primary)) + -->
+<!--   scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- entire_2 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",], aes(fill=sector_primary)) + -->
+<!--   scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- entire_3 = ggplot() + -->
+<!--   geom_sf(data = sector_map_delta$geometry) + -->
+<!--   geom_sf(data = sector_map_delta, aes(fill=sector_primary_delta)) + -->
+<!--   scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- entire_4 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) + -->
+<!--   scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- entire_5 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",], aes(fill=sector_secondary)) + -->
+<!--   scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- entire_6 = ggplot() + -->
+<!--   geom_sf(data = sector_map_delta$geometry) + -->
+<!--   geom_sf(data = sector_map_delta, aes(fill=sector_secondary_delta)) + -->
+<!--   scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+
+<!-- entire_7 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) + -->
+<!--   scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- entire_8 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",], aes(fill=sector_tertiary)) + -->
+<!--   scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- entire_9 = ggplot() + -->
+<!--   geom_sf(data = sector_map_delta$geometry) + -->
+<!--   geom_sf(data = sector_map_delta, aes(fill=sector_tertiary_delta)) + -->
+<!--   scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+
+<!-- ggpubr::ggarrange(entire_1, entire_2, entire_3, entire_4, entire_5, entire_6, entire_7, entire_8, entire_9, -->
+<!--                   ncol = 3, nrow = 3, -->
+<!--                   hjust =  -0.7) -->
+<!-- ``` -->
+
+
+
+<details><summary> Benin </summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Benin_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Benin_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Benin_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Benin",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Benin",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Benin_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Benin_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Benin_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Benin",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Benin",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Benin_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Benin_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Benin" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Benin_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Benin",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Benin",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Benin_1, Benin_2, Benin_3, Benin_4, Benin_5, Benin_6, Benin_7, Benin_8, Benin_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Botswana</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Botswana_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Botswana_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Botswana_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Botswana",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Botswana",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Botswana_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Botswana_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Botswana_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Botswana",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Botswana",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Botswana_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Botswana_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Botswana" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Botswana_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Botswana",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Botswana",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Botswana_1, Botswana_2, Botswana_3, Botswana_4, Botswana_5, Botswana_6, Botswana_7, Botswana_8, Botswana_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Egypt</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Egypt_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Egypt_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Egypt_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Egypt",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Egypt",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Egypt_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Egypt_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Egypt_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Egypt",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Egypt",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Egypt_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Egypt_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Egypt" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Egypt_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Egypt",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Egypt",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Egypt_1, Egypt_2, Egypt_3, Egypt_4, Egypt_5, Egypt_6, Egypt_7, Egypt_8, Egypt_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Ghana</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Ghana_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Ghana_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Ghana_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Ghana",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Ghana",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Ghana_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Ghana_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Ghana_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Ghana",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Ghana",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Ghana_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Ghana_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Ghana" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Ghana_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Ghana",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Ghana",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Ghana_1, Ghana_2, Ghana_3, Ghana_4, Ghana_5, Ghana_6, Ghana_7, Ghana_8, Ghana_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Malawi</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Malawi_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Malawi_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Malawi_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Malawi",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Malawi",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Malawi_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Malawi_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Malawi_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Malawi",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Malawi",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Malawi_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Malawi_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Malawi" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Malawi_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Malawi",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Malawi",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Malawi_1, Malawi_2, Malawi_3, Malawi_4, Malawi_5, Malawi_6, Malawi_7, Malawi_8, Malawi_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Mali</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Mali_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mali_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mali_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mali",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mali",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mali_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mali_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mali_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mali",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mali",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Mali_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mali_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mali" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mali_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mali",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mali",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Mali_1, Mali_2, Mali_3, Mali_4, Mali_5, Mali_6, Mali_7, Mali_8, Mali_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Morocco</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Morocco_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Morocco_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Morocco_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Morocco",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Morocco",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Morocco_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Morocco_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Morocco_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Morocco",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Morocco",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Morocco_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Morocco_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Morocco" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Morocco_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Morocco",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Morocco",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Morocco_1, Morocco_2, Morocco_3, Morocco_4, Morocco_5, Morocco_6, Morocco_7, Morocco_8, Morocco_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Mozambique</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Mozambique_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mozambique_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mozambique_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mozambique",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mozambique",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mozambique_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mozambique_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mozambique_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mozambique",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mozambique",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Mozambique_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mozambique_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Mozambique" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Mozambique_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mozambique",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Mozambique",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Mozambique_1, Mozambique_2, Mozambique_3, Mozambique_4, Mozambique_5, Mozambique_6, Mozambique_7, Mozambique_8, Mozambique_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+
+</details><details><summary>Rwanda</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+rwa = read_sf(dsn = "~/Dropbox/Work/RA/services micro ssa/Report/github-webapp/districts_RWA", layer = "districts_RWA")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Rwanda_1 = ggplot() +
+  geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Rwanda_2 = ggplot() +
+  geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Rwanda_3 = ggplot() +
+  geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Rwanda",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Rwanda",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Rwanda_4 = ggplot() +
+    geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Rwanda_5 = ggplot() +
+    geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Rwanda_6 = ggplot() +
+    geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Rwanda",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Rwanda",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Rwanda_7 = ggplot() +
+    geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Rwanda_8 = ggplot() +
+    geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Rwanda" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Rwanda_9 = ggplot() +
+    geom_sf(data = rwa$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Rwanda",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Rwanda",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Rwanda_1, Rwanda_2, Rwanda_3, Rwanda_4, Rwanda_5, Rwanda_6, Rwanda_7, Rwanda_8, Rwanda_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>South Africa</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+South_Africa_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+South_Africa_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+South_Africa_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="South Africa",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="South Africa",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+South_Africa_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+South_Africa_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+South_Africa_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="South Africa",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="South Africa",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+South_Africa_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+South_Africa_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="South Africa" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+South_Africa_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="South Africa",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="South Africa",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(South_Africa_1, South_Africa_2, South_Africa_3, South_Africa_4, South_Africa_5, South_Africa_6, South_Africa_7, South_Africa_8, South_Africa_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Tanzania</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Tanzania_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Tanzania_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Tanzania_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Tanzania",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Tanzania",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Tanzania_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Tanzania_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Tanzania_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Tanzania",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Tanzania",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Tanzania_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Tanzania_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Tanzania" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Tanzania_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Tanzania",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Tanzania",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Tanzania_1, Tanzania_2, Tanzania_3, Tanzania_4, Tanzania_5, Tanzania_6, Tanzania_7, Tanzania_8, Tanzania_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```
+
+</details><details><summary>Zambia</summary>
+
+```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10}
+library(tidyverse)
+library(sf)
+
+load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData")
+
+sector_map = panel_alesina %>%
+  filter(wave == "secondtolast" | wave == "last") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry"))) 
+
+sector_map_delta = sector_map %>%
+  sf::st_drop_geometry() %>%
+  dplyr::select(-wave) %>%
+  pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>%
+  mutate(sector_primary_delta = sector_primary_3 - sector_primary_2,
+         sector_secondary_delta = sector_secondary_3 - sector_secondary_2,
+         sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>%
+  mutate(wave = "delta") %>%
+  dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta")))
+
+geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry")))
+sector_map_delta = merge(geometries, sector_map_delta, by = "district")
+
+Zambia_1 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="secondtolast",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Zambia_2 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="last",], aes(fill=sector_primary)) +
+  scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Zambia_3 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Zambia",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Zambia",], aes(fill=sector_primary_delta)) +
+  scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Zambia_4 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Zambia_5 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="last",], aes(fill=sector_secondary)) +
+  scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Zambia_6 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Zambia",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Zambia",], aes(fill=sector_secondary_delta)) +
+  scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+
+Zambia_7 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="secondtolast",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Zambia_8 = ggplot() +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="last",]$geometry) +
+  geom_sf(data = sector_map[sector_map$country=="Zambia" & sector_map$wave=="last",], aes(fill=sector_tertiary)) +
+  scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+Zambia_9 = ggplot() +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Zambia",]$geometry) +
+  geom_sf(data = sector_map_delta[sector_map_delta$country=="Zambia",], aes(fill=sector_tertiary_delta)) +
+  scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") +
+  theme_void() + theme(legend.title = element_text(face = "bold"))
+
+ggpubr::ggarrange(Zambia_1, Zambia_2, Zambia_3, Zambia_4, Zambia_5, Zambia_6, Zambia_7, Zambia_8, Zambia_9,
+                  ncol = 3, nrow = 3,
+                  hjust =  -0.7)
+```

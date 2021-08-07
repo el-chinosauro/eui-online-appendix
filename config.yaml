@@ -12,21 +12,21 @@ taxonomies:
   category: categories
   tag: tags
 author:
-  bio: __This website hosts the online appendix for the recently published 'Services and Economic Development in Africa' report by Leonardo Baccini, Matteo Fiorini, Bernard Hoekman and Marco Sanfilippo. We have deployed this online tool in order to showcase graphs and maps on sectoral and occupational dynamics in Africa over available census waves in the IPUMS International database. The code used in the appendix and this website are developed and maintained by Lorenzo Sileci, a Research Associate at the EUI Robert Schuman Centre for Advanced Economics (Global Governance Programme), and PhD Student in Environmental Economics at the London School of Economics and Political Science (LSE).__
+  bio: __This website hosts the online appendix for the recently published 'Services and Economic Development in Africa' report by Leonardo Baccini, Matteo Fiorini, Bernard Hoekman and Marco Sanfilippo. We have deployed this online tool in order to showcase graphs and maps on sectoral and occupational dynamics in Africa over available census waves in the IPUMS International database. The code used in the appendix and this website are developed and maintained by Lorenzo Sileci, a Research Associate at the EUI Robert Schuman Centre for Advanced Studies (Global Governance Programme), and PhD Student in Environmental Economics at the London School of Economics and Political Science (LSE).__
   name: Services and Economic Development in Africa
-  picture: https://www.eui.eu/web-production/code/assets/img/logo-eui.svg
+  picture: http://i.imgur.com/yTJdVvH.png
 menu:
   links:
     - identifier: github
       name: GitHub
       pre: <i class="sidebar-button-icon fa fa-lg fa-github"></i>
-      url: https://github.com/el-chinosauro
+      url: https://github.com/el-chinosauro/eui-online-appendix
       weight: 1
   main:
     - identifier: twitter
       name: Twitter
       pre: <i class="sidebar-button-icon fa fa-lg fa-twitter"></i>
-      url: https://twitter.com/el_chinosauro
+      url: https://twitter.com/EUI_GlobGovProg
       weight: 1
   
 
@@ -41,7 +41,7 @@ params:
       icon: ''
       url: /#about
   hierarchicalCategories: yes
-  imageGallery: yes
+  imageGallery: false
   sharingOptions:
     - icon: fa-facebook-official
       name: Facebook

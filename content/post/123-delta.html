@@ -1,0 +1,121 @@
+---
+title: "Sectoral Dynamics Maps"
+author:
+  - Lorenzo Sileci^[All code and this website are developed and maintained by Lorenzo Sileci (LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; l.sileci@lse.ac.uk)]
+
+date: "09/07/2021"
+output: 
+  html_document
+summary: "Series of maps showing the dynamics of aggregate sectors across countries included in the dataset. Maps show admin-level sectoral shares for the last two available waves and the differential between waves."
+showDate: false
+gallery:
+    - http://i.imgur.com/VEjofCs.png
+    
+autoThumbnailImage: yes
+thumbnailImagePosition: left
+---
+
+
+
+<hr />
+<div id="aggregate-sectoral-dynamics-maps" class="section level3">
+<h3>Aggregate Sectoral Dynamics Maps</h3>
+<!-- #### Entire Dataset -->
+<!-- ```{r, echo=F, message=F, warning = F, fig.align='center', fig.width=15, fig.height = 10} -->
+<!-- library(tidyverse) -->
+<!-- library(sf) -->
+<!-- load("~/Dropbox/Work/RA/services micro ssa/Lorenzo_RA_Work/cleaned-alesina/panel-alesina.RData") -->
+<!-- sector_map = panel_alesina %>% -->
+<!--   filter(wave == "secondtolast" | wave == "last") %>% -->
+<!--   dplyr::select(one_of(c("country", "district", "wave", "wave_id", "sector_primary", "sector_secondary", "sector_tertiary", "geometry")))  -->
+<!-- sector_map_delta = sector_map %>% -->
+<!--   sf::st_drop_geometry() %>% -->
+<!--   dplyr::select(-wave) %>% -->
+<!--   pivot_wider(names_from = wave_id, values_from = c(sector_primary, sector_secondary, sector_tertiary)) %>% -->
+<!--   mutate(sector_primary_delta = sector_primary_3 - sector_primary_2, -->
+<!--          sector_secondary_delta = sector_secondary_3 - sector_secondary_2, -->
+<!--          sector_tertiary_delta = sector_tertiary_3 - sector_tertiary_2) %>% -->
+<!--   mutate(wave = "delta") %>% -->
+<!--   dplyr::select(one_of(c("country", "district", "wave", "sector_primary_delta", "sector_secondary_delta", "sector_tertiary_delta"))) -->
+<!-- geometries = sector_map %>% dplyr::select(one_of(c("district", "geometry"))) -->
+<!-- sector_map_delta = merge(geometries, sector_map_delta, by = "district") -->
+<!-- entire_1 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",], aes(fill=sector_primary)) + -->
+<!--   scale_fill_viridis_c(option = "plasma", name = "Primary Sector I") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_2 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",], aes(fill=sector_primary)) + -->
+<!--   scale_fill_viridis_c(option = "plasma", name = "Primary Sector II") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_3 = ggplot() + -->
+<!--   geom_sf(data = sector_map_delta$geometry) + -->
+<!--   geom_sf(data = sector_map_delta, aes(fill=sector_primary_delta)) + -->
+<!--   scale_fill_viridis_c(option = "plasma", name = "\u0394 Primary Sector") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_4 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",], aes(fill=sector_secondary)) + -->
+<!--   scale_fill_viridis_c(option = "viridis", name = "Secondary Sector I") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_5 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",], aes(fill=sector_secondary)) + -->
+<!--   scale_fill_viridis_c(option = "viridis", name = "Secondary Sector II") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_6 = ggplot() + -->
+<!--   geom_sf(data = sector_map_delta$geometry) + -->
+<!--   geom_sf(data = sector_map_delta, aes(fill=sector_secondary_delta)) + -->
+<!--   scale_fill_viridis_c(option = "viridis", name = "\u0394 Secondary Sector") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_7 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="secondtolast",], aes(fill=sector_tertiary)) + -->
+<!--   scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector I") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_8 = ggplot() + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",]$geometry) + -->
+<!--   geom_sf(data = sector_map[sector_map$wave=="last",], aes(fill=sector_tertiary)) + -->
+<!--   scale_fill_viridis_c(option = "rocket", name = "Tertiary Sector II") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- entire_9 = ggplot() + -->
+<!--   geom_sf(data = sector_map_delta$geometry) + -->
+<!--   geom_sf(data = sector_map_delta, aes(fill=sector_tertiary_delta)) + -->
+<!--   scale_fill_viridis_c(option = "rocket", name = "\u0394 Tertiary Sector") + -->
+<!--   theme_void() + theme(legend.title = element_text(face = "bold")) -->
+<!-- ggpubr::ggarrange(entire_1, entire_2, entire_3, entire_4, entire_5, entire_6, entire_7, entire_8, entire_9, -->
+<!--                   ncol = 3, nrow = 3, -->
+<!--                   hjust =  -0.7) -->
+<!-- ``` -->
+<p><details><summary> Benin </summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-1-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Botswana</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-2-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Egypt</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-3-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Ghana</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-4-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Malawi</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-5-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Mali</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-6-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Morocco</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-7-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Mozambique</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-8-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Rwanda</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-9-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>South Africa</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-10-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Tanzania</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-11-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p></details><details><summary>Zambia</summary></p>
+<p><img src="/post/123-delta_files/figure-html/unnamed-chunk-12-1.png" width="1440" style="display: block; margin: auto;" /></p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>All code and this website are developed and maintained by Lorenzo Sileci (LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; <a href="mailto:l.sileci@lse.ac.uk">l.sileci@lse.ac.uk</a>)<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>

@@ -1,9 +1,12 @@
 ---
-title: "Occupational Dynamics"
+title: "Disaggregated Occupational Dynamics"
+author:
+  - Lorenzo Sileci^[All code and this website are developed and maintained by Lorenzo Sileci (LSE, Department of Geography and Environment; Grantham Research Institute for Climate Change and the Environment; l.sileci@lse.ac.uk)]
+
 date: "22/06/2021"
 output: 
   html_document
-summary: "Scatterplots showing occupational dynamics across the last two available waves in the IPUMS dataset."
+summary: "Scatterplots showing disaggregated occupational dynamics across the last two available waves in the IPUMS dataset."
 showDate: false
 gallery:
     - http://i.imgur.com/3wezPG1.png 
@@ -20,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-### Disaggregated Occupational Dynamics 
+### Disaggregated Occupational Dynamics
 
 Here we provide a series of faceted scatterplots which describe the dynamics of surveyed individuals' occupational allocation in the last two available waves of the IPUMS dataset. We first examine the whole dataset and then refine the exercise by looking at individual countries. Here, each occupational category is reported in a different facet.
 
