@@ -34,7 +34,7 @@ params:
   autoThumbnailImage: yes
   clearReading: yes
   coverImage: https://eoimages.gsfc.nasa.gov/images/imagerecords/90000/90008/asia_vir_2016_lrg.png
-  description: Hugo tranquilpeak theme demo
+  description: EUI GGP Services and Economic Development Project
   header:
     rightLink:
       class: ''
