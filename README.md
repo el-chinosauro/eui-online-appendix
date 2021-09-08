@@ -4,3 +4,5 @@ This repo hosts the [online appendix](https://elegant-ptolemy-0530b6.netlify.app
 
 In the Appendix, we explore sectoral and occupational dynamics at the second administrative level for 13 African countries included in the [IPUMS International](https://international.ipums.org/international/index.shtml) database. We provide scatterplots illustrating the movement of workers across sectors or occupations, barplots depicting the share of each sector or occupation on country totals, a series of maps which spatially connotate the dynamics of the 3 macro sectors, and replication code coupled with maps.
 
+If you use the data and the code, please cite us as "Baccini, L., Fiorni, M., Hoekman, B. and Sanfilippo, M. (2021) Services and Economi Development in Africa, IGC Working Paper N. F-20086-NOC-1"
+
